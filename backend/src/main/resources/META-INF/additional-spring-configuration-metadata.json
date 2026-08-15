@@ -1,0 +1,33 @@
+{
+    "properties": [
+        {
+            "name": "DB_URL",
+            "type": "java.lang.String",
+            "defaultValue": "jdbc:postgresql://localhost:5432/expensesplit",
+            "description": "PostgreSQL JDBC URL. Mapped to spring.datasource.url via application.properties."
+        },
+        {
+            "name": "DB_USERNAME",
+            "type": "java.lang.String",
+            "defaultValue": "postgres",
+            "description": "PostgreSQL username. Mapped to spring.datasource.username via application.properties."
+        },
+        {
+            "name": "DB_PASSWORD",
+            "type": "java.lang.String",
+            "description": "PostgreSQL password. Required — mapped to spring.datasource.password via application.properties."
+        },
+        {
+            "name": "firebase.mock",
+            "type": "java.lang.Boolean",
+            "defaultValue": false,
+            "description": "When set to true, the Firebase Admin SDK is NOT initialised and the security filter runs in mock mode — every request is treated as an authenticated user with uid 'mock-user'. Useful for local development without a real Firebase project. Must be false in production."
+        },
+        {
+            "name": "firebase.config.path",
+            "type": "java.lang.String",
+            "defaultValue": "classpath:firebase-service-account.json",
+            "description": "Location of the Firebase service-account JSON file used to initialise the Firebase Admin SDK. Accepts Spring resource path notation: 'classpath:firebase-service-account.json' for a file on the classpath, or 'file:/absolute/path/to/service-account.json' for an external file. This property is ignored when firebase.mock=true."
+        }
+    ]
+}

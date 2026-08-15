@@ -1,0 +1,138 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-background: oklch(0.985 0.002 106);
+  --color-foreground: oklch(0.21 0.006 106);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.21 0.006 106);
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.21 0.006 106);
+  --color-primary: oklch(0.52 0.105 175);
+  --color-primary-foreground: oklch(0.99 0.01 175);
+  --color-secondary: oklch(0.96 0.004 106);
+  --color-secondary-foreground: oklch(0.35 0.01 106);
+  --color-muted: oklch(0.96 0.004 106);
+  --color-muted-foreground: oklch(0.52 0.01 106);
+  --color-accent: oklch(0.94 0.02 175);
+  --color-accent-foreground: oklch(0.35 0.06 175);
+  --color-destructive: oklch(0.55 0.2 25);
+  --color-destructive-foreground: oklch(0.99 0.01 25);
+  --color-border: oklch(0.91 0.004 106);
+  --color-input: oklch(0.91 0.004 106);
+  --color-ring: oklch(0.52 0.105 175);
+  --color-success: oklch(0.55 0.14 155);
+  --color-success-foreground: oklch(0.99 0.01 155);
+  --color-warning: oklch(0.62 0.15 55);
+  --color-warning-foreground: oklch(0.25 0.04 55);
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+@layer theme {
+  .dark {
+    --color-background: oklch(0.16 0.006 106);
+    --color-foreground: oklch(0.95 0.004 106);
+    --color-card: oklch(0.2 0.006 106);
+    --color-card-foreground: oklch(0.95 0.004 106);
+    --color-popover: oklch(0.2 0.006 106);
+    --color-popover-foreground: oklch(0.95 0.004 106);
+    --color-primary: oklch(0.68 0.12 175);
+    --color-primary-foreground: oklch(0.15 0.03 175);
+    --color-secondary: oklch(0.25 0.006 106);
+    --color-secondary-foreground: oklch(0.9 0.004 106);
+    --color-muted: oklch(0.25 0.006 106);
+    --color-muted-foreground: oklch(0.65 0.01 106);
+    --color-accent: oklch(0.28 0.04 175);
+    --color-accent-foreground: oklch(0.85 0.06 175);
+    --color-destructive: oklch(0.55 0.2 25);
+    --color-destructive-foreground: oklch(0.99 0.01 25);
+    --color-border: oklch(0.3 0.006 106);
+    --color-input: oklch(0.3 0.006 106);
+    --color-ring: oklch(0.68 0.12 175);
+    --color-success: oklch(0.65 0.14 155);
+    --color-success-foreground: oklch(0.15 0.03 155);
+    --color-warning: oklch(0.72 0.14 75);
+    --color-warning-foreground: oklch(0.2 0.04 75);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  /* Avoid text-insertion caret on buttons, tabs, links, etc. */
+  button,
+  [role='button'],
+  [role='tab'],
+  [role='menuitem'],
+  [role='option'],
+  label,
+  summary,
+  a {
+    @apply select-none;
+  }
+
+  #root {
+    @apply min-h-dvh select-none;
+  }
+
+  input,
+  textarea,
+  [contenteditable='true'],
+  .select-text {
+    @apply select-text;
+  }
+
+  /* Themed scrollbars (Firefox) */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+
+  /* Themed scrollbars (Chromium / Safari) */
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-muted-foreground);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}

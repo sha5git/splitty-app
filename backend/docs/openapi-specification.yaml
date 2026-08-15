@@ -1,0 +1,457 @@
+openapi: 3.0.3
+info:
+  title: Expense Splitting App API - Phase 1
+  description: Backend REST API for managing groups, expenses, settlements, and computed balances.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+paths:
+  /api/users/me:
+    get:
+      summary: Sync/fetch current user details
+      description: Returns user profile for the authenticated Firebase user. Automatically registers the user row on first login.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '401':
+          description: Unauthorized
+
+  /api/groups:
+    post:
+      summary: Create a group
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroupRequest'
+      responses:
+        '201':
+          description: Group created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupDto'
+    get:
+      summary: List groups for current user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupDto'
+
+  /api/groups/{id}:
+    get:
+      summary: Get group details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Group details + members
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupDto'
+        '404':
+          description: Group not found or access denied
+
+  /api/groups/{id}/members:
+    post:
+      summary: Add a member to a group
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMemberRequest'
+      responses:
+        '200':
+          description: Member added successfully
+        '400':
+          description: Invalid request or user already in group
+        '404':
+          description: Group/User not found or access denied
+
+  /api/groups/{id}/members/{userId}:
+    delete:
+      summary: Remove a member from a group
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Member removed successfully
+        '404':
+          description: Group/Member not found or access denied
+
+  /api/groups/{id}/expenses:
+    post:
+      summary: Add expense
+      description: Equal split only for Phase 1.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExpenseRequest'
+      responses:
+        '201':
+          description: Expense added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseDto'
+    get:
+      summary: List expenses for group
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of group expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExpenseDto'
+
+  /api/expenses/{id}:
+    delete:
+      summary: Delete an expense
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Expense deleted successfully
+        '404':
+          description: Expense not found or access denied
+
+  /api/groups/{id}/balances:
+    get:
+      summary: Get computed balances
+      description: Returns who owes whom for the group in Rupees (₹) using simplified debt transactions.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of balance transfers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BalanceDto'
+
+  /api/groups/{id}/net-balance:
+    get:
+      summary: Get current user's net balance in a group
+      description: >
+        Returns the authenticated user's net balance for the group in Rupees (₹).
+        A positive value means the user is owed money; a negative value means they owe money.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Current user's net balance summary for the group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupNetBalanceDto'
+        '404':
+          description: Group not found or access denied
+
+  /api/groups/{id}/settlements:
+    post:
+      summary: Record a settlement
+      description: Records a payment from one member to another.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSettlementRequest'
+      responses:
+        '201':
+          description: Settlement recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettlementDto'
+    get:
+      summary: Get settlement history
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of group settlements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SettlementDto'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        firebaseUid:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: string
+    CreateGroupRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    GroupDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        createdBy:
+          $ref: '#/components/schemas/UserDto'
+        createdAt:
+          type: string
+          format: date-time
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDto'
+    AddMemberRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        userId:
+          type: integer
+          format: int64
+    CreateExpenseRequest:
+      type: object
+      required:
+        - amount
+        - description
+      properties:
+        amount:
+          type: number
+          format: double
+        description:
+          type: string
+        paidById:
+          type: integer
+          format: int64
+        date:
+          type: string
+          format: date-time
+        splitWithUserIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    ExpenseSplitDto:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserDto'
+        amountOwed:
+          type: number
+          format: double
+    ExpenseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        groupId:
+          type: integer
+          format: int64
+        paidBy:
+          $ref: '#/components/schemas/UserDto'
+        amount:
+          type: number
+          format: double
+        description:
+          type: string
+        date:
+          type: string
+          format: date-time
+        splitType:
+          type: string
+        splits:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpenseSplitDto'
+    BalanceDto:
+      type: object
+      properties:
+        fromUser:
+          $ref: '#/components/schemas/UserDto'
+        toUser:
+          $ref: '#/components/schemas/UserDto'
+        amount:
+          type: number
+          format: double
+    GroupNetBalanceDto:
+      type: object
+      properties:
+        groupId:
+          type: integer
+          format: int64
+        user:
+          $ref: '#/components/schemas/UserDto'
+        netBalance:
+          type: number
+          format: double
+          description: Positive if the user is owed money; negative if they owe money.
+    CreateSettlementRequest:
+      type: object
+      required:
+        - fromUserId
+        - toUserId
+        - amount
+      properties:
+        fromUserId:
+          type: integer
+          format: int64
+        toUserId:
+          type: integer
+          format: int64
+        amount:
+          type: number
+          format: double
+        date:
+          type: string
+          format: date-time
+    SettlementDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        groupId:
+          type: integer
+          format: int64
+        fromUser:
+          $ref: '#/components/schemas/UserDto'
+        toUser:
+          $ref: '#/components/schemas/UserDto'
+        amount:
+          type: number
+          format: double
+        date:
+          type: string
+          format: date-time
