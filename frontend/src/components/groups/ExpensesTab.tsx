@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { format } from 'date-fns'
 import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { useAuth } from '@/auth/AuthProvider'
-import type { UserDto } from '@/api/types'
+import type { ExpenseDto, UserDto } from '@/api/types'
 import { useCreateExpense, useDeleteExpense, useExpenses } from '@/api/hooks'
 import { UserAvatar } from '@/components/UserAvatar'
 import { Button } from '@/components/ui/button'
@@ -22,7 +23,14 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatInr, formatRelative } from '@/lib/format'
+import { getExpenseImpact } from '@/lib/expenseImpact'
+import {
+  formatExpenseDayParts,
+  formatInr,
+  formatMonthYear,
+  parseAppDate,
+} from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 const expenseSchema = z.object({
   description: z.string().min(1, 'Description is required').max(200),
@@ -166,7 +174,124 @@ function AddExpenseDialog({ groupId, members }: ExpensesTabProps) {
   )
 }
 
+function groupExpensesByMonth(expenses: ExpenseDto[]) {
+  const sections: { key: string; title: string; expenses: ExpenseDto[] }[] = []
+
+  for (const expense of expenses) {
+    if (!expense.date) {
+      const undated = sections.find((s) => s.key === 'undated')
+      if (undated) {
+        undated.expenses.push(expense)
+      } else {
+        sections.push({ key: 'undated', title: 'Undated', expenses: [expense] })
+      }
+      continue
+    }
+
+    const key = format(parseAppDate(expense.date), 'yyyy-MM')
+    const last = sections[sections.length - 1]
+    if (last && last.key === key) {
+      last.expenses.push(expense)
+    } else {
+      sections.push({
+        key,
+        title: formatMonthYear(expense.date),
+        expenses: [expense],
+      })
+    }
+  }
+
+  // Keep Undated at the bottom even if it appeared mid-list
+  const undatedIndex = sections.findIndex((s) => s.key === 'undated')
+  if (undatedIndex >= 0 && undatedIndex < sections.length - 1) {
+    const [undated] = sections.splice(undatedIndex, 1)
+    sections.push(undated)
+  }
+
+  return sections
+}
+
+function ExpenseRow({
+  expense,
+  currentUserId,
+  onDelete,
+  deleting,
+}: {
+  expense: ExpenseDto
+  currentUserId?: number
+  onDelete: () => void
+  deleting: boolean
+}) {
+  const impact = getExpenseImpact(expense, currentUserId)
+  const dayParts = expense.date ? formatExpenseDayParts(expense.date) : null
+  const iPaid = expense.paidBy?.id === currentUserId
+  const payerLabel = iPaid ? 'You' : (expense.paidBy?.name ?? 'Unknown')
+
+  return (
+    <div className="flex items-center gap-2 border-b border-border/60 py-2 last:border-b-0">
+      <div className="w-7 shrink-0 text-center leading-tight text-muted-foreground">
+        {dayParts ? (
+          <>
+            <p className="text-[10px] font-medium uppercase tracking-wide">{dayParts.month}</p>
+            <p className="text-sm font-semibold tabular-nums text-foreground">{dayParts.day}</p>
+          </>
+        ) : (
+          <p className="text-[10px]">—</p>
+        )}
+      </div>
+
+      <UserAvatar user={expense.paidBy ?? { name: '?' }} className="h-7 w-7 shrink-0 text-[10px]" />
+
+      <div className="min-w-0 flex-1 select-text">
+        <p className="truncate text-sm font-medium leading-snug">{expense.description}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          {payerLabel} paid {formatInr(expense.amount ?? 0)}
+        </p>
+      </div>
+
+      <div className="shrink-0 text-right">
+        {impact ? (
+          <>
+            <p
+              className={cn(
+                'text-[10px] font-medium leading-tight',
+                impact.type === 'lent'
+                  ? 'text-emerald-700 dark:text-emerald-400'
+                  : 'text-destructive',
+              )}
+            >
+              {impact.type === 'lent' ? 'you lent' : 'you borrowed'}
+            </p>
+            <p
+              className={cn(
+                'font-mono text-xs font-semibold tabular-nums',
+                impact.type === 'lent'
+                  ? 'text-emerald-700 dark:text-emerald-400'
+                  : 'text-destructive',
+              )}
+            >
+              {formatInr(impact.amount)}
+            </p>
+          </>
+        ) : null}
+      </div>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+        onClick={onDelete}
+        disabled={deleting}
+        aria-label="Delete expense"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  )
+}
+
 export function ExpensesTab({ groupId, members }: ExpensesTabProps) {
+  const { user } = useAuth()
   const deleteExpense = useDeleteExpense(groupId)
   const { data: expenses, isLoading, isError, error } = useExpenses(groupId)
 
@@ -174,7 +299,7 @@ export function ExpensesTab({ groupId, members }: ExpensesTabProps) {
     return (
       <div className="space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
+          <Skeleton key={i} className="h-16 rounded-xl" />
         ))}
       </div>
     )
@@ -190,6 +315,8 @@ export function ExpensesTab({ groupId, members }: ExpensesTabProps) {
     )
   }
 
+  const sections = expenses?.length ? groupExpensesByMonth(expenses) : []
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -204,41 +331,24 @@ export function ExpensesTab({ groupId, members }: ExpensesTabProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {expenses.map((expense) => (
-            <Card key={expense.id}>
-              <CardContent className="flex items-start gap-4 py-4">
-                <UserAvatar user={expense.paidBy ?? { name: '?' }} className="h-10 w-10 shrink-0" />
-                <div className="min-w-0 flex-1 select-text">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium">{expense.description}</p>
-                      <p className="mt-0.5 text-sm text-muted-foreground">
-                        Paid by {expense.paidBy?.name ?? 'Unknown'}
-                        {expense.date ? ` · ${formatRelative(expense.date)}` : null}
-                      </p>
-                    </div>
-                    <p className="shrink-0 font-mono font-semibold tabular-nums">{formatInr(expense.amount ?? 0)}</p>
-                  </div>
-                  {expense.splits?.length ? (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {formatInr((expense.amount ?? 0) / expense.splits.length)} each · {expense.splits.length}{' '}
-                      people
-                    </p>
-                  ) : null}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
-                  onClick={() => expense.id && deleteExpense.mutate(expense.id)}
-                  disabled={deleteExpense.isPending}
-                  aria-label="Delete expense"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
+        <div className="space-y-6">
+          {sections.map((section) => (
+            <section key={section.key}>
+              <h3 className="sticky top-0 z-10 bg-background/95 py-1.5 text-xs font-semibold text-muted-foreground backdrop-blur supports-[backdrop-filter]:bg-background/80">
+                {section.title}
+              </h3>
+              <div>
+                {section.expenses.map((expense) => (
+                  <ExpenseRow
+                    key={expense.id}
+                    expense={expense}
+                    currentUserId={user?.id}
+                    onDelete={() => expense.id && deleteExpense.mutate(expense.id)}
+                    deleting={deleteExpense.isPending}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}

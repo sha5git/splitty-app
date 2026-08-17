@@ -1,0 +1,35 @@
+---
+description: Frontend TypeScript and React coding standards
+globs: frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend coding
+
+## Structure
+
+- Pages in `pages/`, feature UI in `components/`, API in `api/`, auth in `auth/`.
+- Path alias `@/` → `src/`.
+- Forms: `react-hook-form` + `zod` + `@hookform/resolvers`.
+- Server state: TanStack Query hooks in `api/hooks.ts` with `queryKeys`; mutations invalidate related keys and toast.
+
+## TypeScript / React
+
+- Functional components only; typed props.
+- Prefer generated types from `api/schema.d.ts` / `api/types.ts` over hand-rolled API shapes.
+- Use `cn()` from `@/lib/utils` for class merging.
+- Dates: `parseAppDate` / `toLocalDateTimeString` — backend is timezone-naive `LocalDateTime`.
+
+```tsx
+// ❌ BAD — ad-hoc fetch + untyped body
+const res = await fetch('/api/groups')
+
+// ✅ GOOD — shared client + hook
+const { data } = useGroups()
+```
+
+## UI code
+
+- Build with existing `Button`, `Card`, `Dialog`, `Tabs`, etc.
+- Do not add `useMemo`/`useCallback` unless profiling or repo already does for that case.
+- Lint with `oxlint` (`npm run lint`).

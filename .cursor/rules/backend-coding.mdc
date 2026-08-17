@@ -1,0 +1,36 @@
+---
+description: Spring Boot backend coding standards
+globs: backend/**/*.java
+alwaysApply: false
+---
+
+# Backend coding
+
+Package: `com.expensesplit`. Layers: `controller` → `service` → `repository`; DTOs in `dto/`; entities in `entity/`.
+
+## Patterns
+
+- Controllers stay thin: validate, auth principal, delegate to service.
+- Auth: `@AuthenticationPrincipal FirebaseUserPrincipal`.
+- Mutations: `@Transactional` on service methods that write.
+- Not found → `ResourceNotFoundException`; bad input → `BadRequestException` (handled globally).
+- Return DTOs, never expose entities in responses.
+- Amounts are INR (`BigDecimal` / decimal fields — match existing entities).
+
+```java
+// ❌ BAD — business logic in controller
+@PostMapping
+public GroupDto create(...) { /* persist here */ }
+
+// ✅ GOOD
+@PostMapping
+@ResponseStatus(HttpStatus.CREATED)
+public GroupDto create(@Valid @RequestBody CreateGroupRequest req,
+                       @AuthenticationPrincipal FirebaseUserPrincipal principal) {
+    return groupService.createGroup(req, principal);
+}
+```
+
+## API contract
+
+Update `backend/docs/openapi-specification.yaml` when endpoints or schemas change, then regenerate the frontend client types.

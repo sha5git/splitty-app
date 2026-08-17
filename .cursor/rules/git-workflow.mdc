@@ -1,0 +1,79 @@
+---
+description: Branch, commit, and pull request workflow for Splitty
+alwaysApply: true
+---
+
+# Git workflow
+
+Every change ships through a **branch + pull request**. Do not commit directly to `main`.
+
+## Branch
+
+- One logical change per branch (feature, fix, or chore — not unrelated mixed work).
+- Name: `<type>/<short-kebab-description>` — e.g. `feat/month-grouped-expenses`, `fix/expense-date-parsing`, `chore/ci-cache`.
+- Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`.
+
+```bash
+git checkout main
+git pull
+git checkout -b feat/my-change
+```
+
+## Commits
+
+- Stage only files that belong to the change. Never commit secrets (`.env`, Firebase keys, `env.sh`).
+- Prefer **small, focused commits** within the branch when it helps review; squash is optional before merge.
+- Message format: **imperative subject** (≤72 chars) + **blank line** + **body** explaining *why* and *what* at a high level.
+
+```
+feat(frontend): group expenses by month on mobile
+
+Replace card-heavy expense rows with a dense month-sectioned list.
+Shows date column, payer line, and personal you lent / you borrowed
+amounts so the list reads well on small screens.
+```
+
+Subject prefixes (match area): `feat`, `fix`, `refactor`, `chore`, `docs`, `test` — optional scope in parentheses: `feat(backend)`, `fix(frontend)`.
+
+Body should briefly cover:
+- **Problem** or motivation (one sentence).
+- **Approach** — what changed and why this way.
+- **Notable details** — migrations, OpenAPI regen, breaking changes (if any).
+
+Do **not** use vague subjects like `update`, `fix stuff`, or `WIP`.
+
+## Pull request
+
+- Open a PR from the feature branch into `main` after pushing (`git push -u origin HEAD`).
+- Use `gh pr create` or GitHub UI. Fill every section of `.github/pull_request_template.md`.
+- PR title: same style as commit subject (can match the branch’s main commit).
+- PR body must include:
+  - **Summary** — 2–4 bullets: user-visible outcome and technical touchpoints.
+  - **Test plan** — checklist of what you verified (manual steps, `mvn test`, `npm run lint`, etc.).
+  - **UI changes** — required when the PR touches frontend layout, styling, or user-visible behavior. Document screens/routes, before/after, screenshots (mobile + desktop, light + dark when relevant), and verification checklist (see template).
+  - **API changes** — required when the PR touches backend endpoints, request/response DTOs, or OpenAPI. Include sample request and response (see template). Also note if `backend/docs/openapi-specification.yaml` was updated and frontend types regenerated (`npm run generate:api`).
+- Keep the diff focused; call out unrelated files you intentionally left out.
+- CI must pass before merge.
+
+## API-related PRs (backend)
+
+When adding or changing an endpoint, the PR **must** document:
+
+1. Method + path
+2. Auth requirement (Firebase Bearer token)
+3. Sample request body (or query params)
+4. Sample success response with realistic field values
+5. Notable error cases (400, 404) if non-obvious
+
+Update OpenAPI first, then regenerate the frontend client when the contract changes.
+
+## UI-related PRs (frontend)
+
+When changing layout, styling, or user-visible behavior, the PR **must** document:
+
+1. **Screens / routes** affected (e.g. group detail → Expenses tab)
+2. **Before / after** — one line each on what the user sees differently
+3. **Screenshots** — mobile and desktop; light and dark when colors or contrast change
+4. **Verified** — mobile, desktop, both themes, and loading/empty/error states if touched
+
+Follow design tokens in `frontend/src/index.css` and patterns in `.cursor/rules/ui-design.mdc`.

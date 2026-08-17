@@ -1,0 +1,32 @@
+---
+description: Splitty UI design system — colors, layout, components
+globs: frontend/src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# UI design
+
+Tokens live in `frontend/src/index.css`. Use semantic Tailwind classes (`bg-primary`, `text-muted-foreground`).
+
+## Palette
+
+| Role | Meaning |
+|------|---------|
+| `primary` | Teal — CTAs, links, brand mark |
+| `accent` | Soft teal wash — hovers, empty states |
+| `success` / emerald | Positive balance (“owed”) |
+| `destructive` | Errors / “you owe” |
+| `muted` | Secondary text, settled state |
+
+## Layout & components
+
+- Shell: `max-w-5xl`, sticky header, mobile-friendly padding (`pb-24` for bottom reach).
+- Prefer `components/ui/*` (shadcn-style) before custom primitives.
+- Cards for interactive list items / forms only — not decorative chrome.
+- Money: `font-mono tabular-nums` + `formatInr()` from `@/lib/format`.
+- Loading: `Skeleton`; feedback: `sonner` toasts.
+- Dark mode via `.dark` class + `ThemeToggle` — support both themes when adding colors.
+
+## Copy
+
+Short, concrete. Tagline tone: “Split bills, not friendships.” Prefer “group / expense / settle” over jargon.

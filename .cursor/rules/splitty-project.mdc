@@ -1,0 +1,24 @@
+---
+description: Splitty product context and cross-cutting conventions
+alwaysApply: true
+---
+
+# Splitty
+
+Bill-splitting app (not Splitwise). Stack: React 19 + Vite + Tailwind 4 + TanStack Query/Router frontend; Spring Boot + Firebase Auth backend; INR amounts.
+
+## Naming
+
+- Product name is **Splitty**. Prefer it in UI copy over generic “expense app”.
+- Packages stay `com.expensesplit` / folder names as-is — do not rename for branding.
+
+## Do / don’t
+
+- Prefer existing patterns in nearby files over new abstractions.
+- Do not invent APIs; use OpenAPI (`backend/docs/openapi-specification.yaml`) and regenerate with `npm run generate:api` in `frontend/`.
+- Do not commit secrets (`.env`, Firebase private keys, `env.sh`).
+- Keep diffs focused — no drive-by refactors or unsolicited markdown docs.
+
+## Visual identity (quick)
+
+Brand primary is **teal** (`primary` / `accent` in `index.css`). Positive balances use emerald / `success`; debts use `destructive`.

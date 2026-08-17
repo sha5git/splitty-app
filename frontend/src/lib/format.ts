@@ -41,6 +41,18 @@ export function formatDate(iso: string) {
   return format(parseAppDate(iso), 'd MMM yyyy')
 }
 
+export function formatMonthYear(iso: string) {
+  return format(parseAppDate(iso), 'MMMM yyyy')
+}
+
+export function formatExpenseDayParts(iso: string) {
+  const date = parseAppDate(iso)
+  return {
+    month: format(date, 'MMM'),
+    day: format(date, 'd'),
+  }
+}
+
 export function formatRelative(iso: string) {
   const date = parseAppDate(iso)
 
