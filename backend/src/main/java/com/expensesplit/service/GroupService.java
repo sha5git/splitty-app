@@ -4,6 +4,7 @@ import com.expensesplit.dto.GroupDto;
 import com.expensesplit.dto.UserDto;
 import com.expensesplit.dto.CreateGroupRequest;
 import com.expensesplit.dto.AddMemberRequest;
+import com.expensesplit.dto.UpdateGroupRequest;
 import com.expensesplit.entity.Group;
 import com.expensesplit.entity.GroupMember;
 import com.expensesplit.entity.GroupMemberId;
@@ -81,6 +82,21 @@ public class GroupService {
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
 
         return convertToDto(group);
+    }
+
+    @Transactional
+    public GroupDto updateGroup(Long groupId, UpdateGroupRequest request, FirebaseUserPrincipal principal) {
+        User user = userService.getEntityByFirebaseUid(principal.getUid());
+
+        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, user.getId())) {
+            throw new ResourceNotFoundException("Group not found or access denied");
+        }
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
+
+        group.setName(request.getName().trim());
+        return convertToDto(groupRepository.save(group));
     }
 
     public Group getEntityById(Long id) {

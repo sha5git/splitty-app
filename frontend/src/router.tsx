@@ -10,6 +10,7 @@ import type { AuthStatus } from '@/auth/AuthProvider'
 import { AuthRouteLayout } from '@/components/layout/AuthRouteLayout'
 import { AuthRouteShell } from '@/components/layout/AuthRouteShell'
 import { LoadingScreen } from '@/components/layout/AppShell'
+import { ExpenseDetailPage } from '@/pages/ExpenseDetailPage'
 import { GroupDetailPage } from '@/pages/GroupDetailPage'
 import { GroupsPage } from '@/pages/GroupsPage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -94,10 +95,19 @@ const groupDetailRoute = createRoute({
   },
 })
 
+const expenseDetailRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/groups/$groupId/expenses/$expenseId',
+  component: function ExpenseDetailRoute() {
+    const { groupId, expenseId } = expenseDetailRoute.useParams()
+    return <ExpenseDetailPage groupId={Number(groupId)} expenseId={Number(expenseId)} />
+  },
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   authLayoutRoute.addChildren([loginRoute, signupRoute]),
-  appRoute.addChildren([groupsRoute, groupDetailRoute]),
+  appRoute.addChildren([groupsRoute, groupDetailRoute, expenseDetailRoute]),
 ])
 
 export const router = createRouter({

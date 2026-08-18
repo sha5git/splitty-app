@@ -147,7 +147,50 @@ export interface paths {
                 };
             };
         };
-        put?: never;
+        /**
+         * Update a group
+         * @description Updates the group name. Caller must be a group member.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateGroupRequest"];
+                };
+            };
+            responses: {
+                /** @description Group updated successfully */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GroupDto"];
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Group not found or access denied */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         post?: never;
         delete?: never;
         options?: never;
@@ -327,8 +370,80 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
+        /** Get an expense by id */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Expense details */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ExpenseDto"];
+                    };
+                };
+                /** @description Expense not found or access denied */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /**
+         * Update an expense
+         * @description Updates description, amount, payer, and equal splits. The original expense date is preserved.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateExpenseRequest"];
+                };
+            };
+            responses: {
+                /** @description Expense updated successfully */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ExpenseDto"];
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Expense not found or access denied */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         post?: never;
         /** Delete an expense */
         delete: {
@@ -534,6 +649,9 @@ export interface components {
         CreateGroupRequest: {
             name: string;
         };
+        UpdateGroupRequest: {
+            name: string;
+        };
         GroupDto: {
             /** Format: int64 */
             id?: number;
@@ -556,6 +674,14 @@ export interface components {
             paidById?: number;
             /** Format: date-time */
             date?: string;
+            splitWithUserIds?: number[];
+        };
+        UpdateExpenseRequest: {
+            /** Format: double */
+            amount: number;
+            description: string;
+            /** Format: int64 */
+            paidById?: number;
             splitWithUserIds?: number[];
         };
         ExpenseSplitDto: {

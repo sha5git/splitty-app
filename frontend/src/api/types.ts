@@ -8,8 +8,10 @@ export type BalanceDto = components['schemas']['BalanceDto']
 export type GroupNetBalanceDto = components['schemas']['GroupNetBalanceDto']
 export type SettlementDto = components['schemas']['SettlementDto']
 export type CreateGroupRequest = components['schemas']['CreateGroupRequest']
+export type UpdateGroupRequest = components['schemas']['UpdateGroupRequest']
 export type AddMemberRequest = components['schemas']['AddMemberRequest']
 export type CreateExpenseRequest = components['schemas']['CreateExpenseRequest']
+export type UpdateExpenseRequest = components['schemas']['UpdateExpenseRequest']
 export type CreateSettlementRequest = components['schemas']['CreateSettlementRequest']
 
 export class ApiError extends Error {

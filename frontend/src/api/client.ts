@@ -54,15 +54,27 @@ export const api = {
   getGroup: (id: number) => apiFetch<import('@/api/types').GroupDto>(`/api/groups/${id}`),
   createGroup: (body: import('@/api/types').CreateGroupRequest) =>
     apiFetch<import('@/api/types').GroupDto>('/api/groups', { method: 'POST', body: JSON.stringify(body) }),
+  updateGroup: (id: number, body: import('@/api/types').UpdateGroupRequest) =>
+    apiFetch<import('@/api/types').GroupDto>(`/api/groups/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
   addMember: (groupId: number, body: import('@/api/types').AddMemberRequest) =>
     apiFetch<void>(`/api/groups/${groupId}/members`, { method: 'POST', body: JSON.stringify(body) }),
   removeMember: (groupId: number, userId: number) =>
     apiFetch<void>(`/api/groups/${groupId}/members/${userId}`, { method: 'DELETE' }),
   getExpenses: (groupId: number) =>
     apiFetch<import('@/api/types').ExpenseDto[]>(`/api/groups/${groupId}/expenses`),
+  getExpense: (expenseId: number) =>
+    apiFetch<import('@/api/types').ExpenseDto>(`/api/expenses/${expenseId}`),
   createExpense: (groupId: number, body: import('@/api/types').CreateExpenseRequest) =>
     apiFetch<import('@/api/types').ExpenseDto>(`/api/groups/${groupId}/expenses`, {
       method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  updateExpense: (expenseId: number, body: import('@/api/types').UpdateExpenseRequest) =>
+    apiFetch<import('@/api/types').ExpenseDto>(`/api/expenses/${expenseId}`, {
+      method: 'PUT',
       body: JSON.stringify(body),
     }),
   deleteExpense: (expenseId: number) =>
