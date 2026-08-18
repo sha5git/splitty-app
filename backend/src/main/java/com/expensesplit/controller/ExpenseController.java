@@ -2,6 +2,7 @@ package com.expensesplit.controller;
 
 import com.expensesplit.dto.CreateExpenseRequest;
 import com.expensesplit.dto.ExpenseDto;
+import com.expensesplit.dto.UpdateExpenseRequest;
 import com.expensesplit.security.FirebaseUserPrincipal;
 import com.expensesplit.service.ExpenseService;
 import jakarta.validation.Valid;
@@ -34,6 +35,19 @@ public class ExpenseController {
     public List<ExpenseDto> listExpenses(@PathVariable("id") Long groupId,
                                          @AuthenticationPrincipal FirebaseUserPrincipal principal) {
         return expenseService.listExpenses(groupId, principal);
+    }
+
+    @GetMapping("/expenses/{id}")
+    public ExpenseDto getExpense(@PathVariable("id") Long expenseId,
+                                 @AuthenticationPrincipal FirebaseUserPrincipal principal) {
+        return expenseService.getExpense(expenseId, principal);
+    }
+
+    @PutMapping("/expenses/{id}")
+    public ExpenseDto updateExpense(@PathVariable("id") Long expenseId,
+                                    @Valid @RequestBody UpdateExpenseRequest request,
+                                    @AuthenticationPrincipal FirebaseUserPrincipal principal) {
+        return expenseService.updateExpense(expenseId, request, principal);
     }
 
     @DeleteMapping("/expenses/{id}")

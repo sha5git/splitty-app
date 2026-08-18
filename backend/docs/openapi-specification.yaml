@@ -76,6 +76,35 @@ paths:
                 $ref: '#/components/schemas/GroupDto'
         '404':
           description: Group not found or access denied
+    put:
+      summary: Update a group
+      description: Updates the group name. Caller must be a group member.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGroupRequest'
+      responses:
+        '200':
+          description: Group updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupDto'
+        '400':
+          description: Invalid request
+        '404':
+          description: Group not found or access denied
 
   /api/groups/{id}/members:
     post:
@@ -175,6 +204,57 @@ paths:
                   $ref: '#/components/schemas/ExpenseDto'
 
   /api/expenses/{id}:
+    get:
+      summary: Get an expense by id
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Expense details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseDto'
+        '404':
+          description: Expense not found or access denied
+    put:
+      summary: Update an expense
+      description: >
+        Updates description, amount, payer, and equal splits.
+        The original expense date is preserved.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExpenseRequest'
+      responses:
+        '200':
+          description: Expense updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseDto'
+        '400':
+          description: Invalid request
+        '404':
+          description: Expense not found or access denied
     delete:
       summary: Delete an expense
       security:
@@ -315,6 +395,13 @@ components:
       properties:
         name:
           type: string
+    UpdateGroupRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
     GroupDto:
       type: object
       properties:
@@ -357,6 +444,25 @@ components:
         date:
           type: string
           format: date-time
+        splitWithUserIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    UpdateExpenseRequest:
+      type: object
+      required:
+        - amount
+        - description
+      properties:
+        amount:
+          type: number
+          format: double
+        description:
+          type: string
+        paidById:
+          type: integer
+          format: int64
         splitWithUserIds:
           type: array
           items:

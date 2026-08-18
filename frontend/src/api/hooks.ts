@@ -7,6 +7,8 @@ import type {
   CreateExpenseRequest,
   CreateGroupRequest,
   CreateSettlementRequest,
+  UpdateExpenseRequest,
+  UpdateGroupRequest,
 } from '@/api/types'
 
 export const queryKeys = {
@@ -14,6 +16,7 @@ export const queryKeys = {
   groups: ['groups'] as const,
   group: (id: number) => ['groups', id] as const,
   expenses: (groupId: number) => ['groups', groupId, 'expenses'] as const,
+  expense: (expenseId: number) => ['expenses', expenseId] as const,
   balances: (groupId: number) => ['groups', groupId, 'balances'] as const,
   netBalance: (groupId: number) => ['groups', groupId, 'net-balance'] as const,
   settlements: (groupId: number) => ['groups', groupId, 'settlements'] as const,
@@ -51,6 +54,15 @@ export function useExpenses(groupId: number) {
   return useQuery({
     queryKey: queryKeys.expenses(groupId),
     queryFn: () => api.getExpenses(groupId),
+    refetchInterval: LIVE_REFETCH_MS,
+  })
+}
+
+export function useExpense(expenseId: number) {
+  return useQuery({
+    queryKey: queryKeys.expense(expenseId),
+    queryFn: () => api.getExpense(expenseId),
+    enabled: Number.isFinite(expenseId) && expenseId > 0,
     refetchInterval: LIVE_REFETCH_MS,
   })
 }
@@ -100,6 +112,19 @@ export function useCreateGroup() {
   })
 }
 
+export function useUpdateGroup(groupId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: UpdateGroupRequest) => api.updateGroup(groupId, body),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.group(groupId), updated)
+      queryClient.invalidateQueries({ queryKey: queryKeys.groups })
+      toast.success('Group updated')
+    },
+    onError: (error: Error) => toast.error(error.message),
+  })
+}
+
 export function useAddMember(groupId: number) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -136,11 +161,25 @@ export function useCreateExpense(groupId: number) {
   })
 }
 
+export function useUpdateExpense(groupId: number, expenseId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: UpdateExpenseRequest) => api.updateExpense(expenseId, body),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.expense(expenseId), updated)
+      invalidateGroup(queryClient, groupId)
+      toast.success('Expense updated')
+    },
+    onError: (error: Error) => toast.error(error.message),
+  })
+}
+
 export function useDeleteExpense(groupId: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (expenseId: number) => api.deleteExpense(expenseId),
-    onSuccess: () => {
+    onSuccess: (_data, expenseId) => {
+      queryClient.removeQueries({ queryKey: queryKeys.expense(expenseId) })
       invalidateGroup(queryClient, groupId)
       toast.success('Expense deleted')
     },

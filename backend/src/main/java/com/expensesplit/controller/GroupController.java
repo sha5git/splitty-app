@@ -3,6 +3,7 @@ package com.expensesplit.controller;
 import com.expensesplit.dto.AddMemberRequest;
 import com.expensesplit.dto.CreateGroupRequest;
 import com.expensesplit.dto.GroupDto;
+import com.expensesplit.dto.UpdateGroupRequest;
 import com.expensesplit.security.FirebaseUserPrincipal;
 import com.expensesplit.service.GroupService;
 import jakarta.validation.Valid;
@@ -39,6 +40,13 @@ public class GroupController {
     public GroupDto getGroupDetails(@PathVariable("id") Long id,
                                     @AuthenticationPrincipal FirebaseUserPrincipal principal) {
         return groupService.getGroupDetails(id, principal);
+    }
+
+    @PutMapping("/{id}")
+    public GroupDto updateGroup(@PathVariable("id") Long id,
+                                @Valid @RequestBody UpdateGroupRequest request,
+                                @AuthenticationPrincipal FirebaseUserPrincipal principal) {
+        return groupService.updateGroup(id, request, principal);
     }
 
     @PostMapping("/{id}/members")

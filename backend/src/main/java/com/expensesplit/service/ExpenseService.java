@@ -3,6 +3,7 @@ package com.expensesplit.service;
 import com.expensesplit.dto.CreateExpenseRequest;
 import com.expensesplit.dto.ExpenseDto;
 import com.expensesplit.dto.ExpenseSplitDto;
+import com.expensesplit.dto.UpdateExpenseRequest;
 import com.expensesplit.entity.*;
 import com.expensesplit.exception.BadRequestException;
 import com.expensesplit.exception.ResourceNotFoundException;
@@ -41,48 +42,12 @@ public class ExpenseService {
     @Transactional
     public ExpenseDto createExpense(Long groupId, CreateExpenseRequest request, FirebaseUserPrincipal principal) {
         User currentUser = userService.getEntityByFirebaseUid(principal.getUid());
-
-        // Security check: current user must be in the group
-        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, currentUser.getId())) {
-            throw new ResourceNotFoundException("Group not found or access denied");
-        }
+        requireGroupMembership(groupId, currentUser.getId());
 
         Group group = groupService.getEntityById(groupId);
+        User paidBy = resolvePayer(groupId, request.getPaidById(), currentUser);
+        List<User> splitUsers = resolveSplitUsers(groupId, request.getSplitWithUserIds());
 
-        // Determine who paid
-        User paidBy;
-        if (request.getPaidById() != null) {
-            paidBy = userService.getEntityById(request.getPaidById());
-            if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, paidBy.getId())) {
-                throw new BadRequestException("Payer is not a member of the group");
-            }
-        } else {
-            paidBy = currentUser;
-        }
-
-        // Determine split members
-        List<User> splitUsers = new ArrayList<>();
-        if (request.getSplitWithUserIds() != null && !request.getSplitWithUserIds().isEmpty()) {
-            for (Long userId : request.getSplitWithUserIds()) {
-                User user = userService.getEntityById(userId);
-                if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, user.getId())) {
-                    throw new BadRequestException("User to split with is not a member of the group: " + user.getName());
-                }
-                splitUsers.add(user);
-            }
-        } else {
-            // Default to all group members
-            splitUsers = groupMemberRepository.findByGroupId(groupId)
-                    .stream()
-                    .map(GroupMember::getUser)
-                    .collect(Collectors.toList());
-        }
-
-        if (splitUsers.isEmpty()) {
-            throw new BadRequestException("No members to split the expense with");
-        }
-
-        // Create the Expense
         Expense expense = Expense.builder()
                 .group(group)
                 .paidBy(paidBy)
@@ -92,34 +57,9 @@ public class ExpenseService {
                 .splitType("EQUAL")
                 .build();
 
-        // Calculate Splits (Equal split with remainder adjustment)
-        int N = splitUsers.size();
-        BigDecimal amount = request.getAmount();
-        BigDecimal baseShare = amount.divide(BigDecimal.valueOf(N), 2, RoundingMode.DOWN);
-        BigDecimal remainder = amount.subtract(baseShare.multiply(BigDecimal.valueOf(N)));
-
-        List<ExpenseSplit> splits = new ArrayList<>();
-        for (int i = 0; i < N; i++) {
-            User user = splitUsers.get(i);
-            BigDecimal share = baseShare;
-            if (i == 0) {
-                share = baseShare.add(remainder);
-            }
-
-            ExpenseSplitId splitId = new ExpenseSplitId(null, user.getId());
-            ExpenseSplit split = ExpenseSplit.builder()
-                    .id(splitId)
-                    .expense(expense)
-                    .user(user)
-                    .amountOwed(share)
-                    .build();
-            splits.add(split);
-        }
-        expense.setSplits(splits);
-
-        // Save expense first, then set the correct composite key expense ID, then save again
+        expense.setSplits(buildEqualSplits(expense, splitUsers, request.getAmount()));
         expense = expenseRepository.save(expense);
-        for (ExpenseSplit split : splits) {
+        for (ExpenseSplit split : expense.getSplits()) {
             split.getId().setExpenseId(expense.getId());
         }
         expense = expenseRepository.save(expense);
@@ -129,28 +69,46 @@ public class ExpenseService {
 
     public List<ExpenseDto> listExpenses(Long groupId, FirebaseUserPrincipal principal) {
         User currentUser = userService.getEntityByFirebaseUid(principal.getUid());
-
-        // Security check
-        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, currentUser.getId())) {
-            throw new ResourceNotFoundException("Group not found or access denied");
-        }
+        requireGroupMembership(groupId, currentUser.getId());
 
         List<Expense> expenses = expenseRepository.findByGroupIdOrderByDateDesc(groupId);
         return expenses.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
+    public ExpenseDto getExpense(Long expenseId, FirebaseUserPrincipal principal) {
+        User currentUser = userService.getEntityByFirebaseUid(principal.getUid());
+        Expense expense = findAccessibleExpense(expenseId, currentUser.getId());
+        return convertToDto(expense);
+    }
+
+    @Transactional
+    public ExpenseDto updateExpense(Long expenseId, UpdateExpenseRequest request, FirebaseUserPrincipal principal) {
+        User currentUser = userService.getEntityByFirebaseUid(principal.getUid());
+        Expense expense = findAccessibleExpense(expenseId, currentUser.getId());
+        Long groupId = expense.getGroup().getId();
+
+        User paidBy = resolvePayer(groupId, request.getPaidById(), currentUser);
+        List<User> splitUsers = resolveSplitUsers(groupId, request.getSplitWithUserIds());
+
+        expense.setDescription(request.getDescription());
+        expense.setAmount(request.getAmount());
+        expense.setPaidBy(paidBy);
+        expense.setSplitType("EQUAL");
+        // Preserve original date
+
+        expense.getSplits().clear();
+        expense.getSplits().addAll(buildEqualSplits(expense, splitUsers, request.getAmount()));
+        for (ExpenseSplit split : expense.getSplits()) {
+            split.getId().setExpenseId(expense.getId());
+        }
+
+        return convertToDto(expenseRepository.save(expense));
+    }
+
     @Transactional
     public void deleteExpense(Long expenseId, FirebaseUserPrincipal principal) {
         User currentUser = userService.getEntityByFirebaseUid(principal.getUid());
-
-        Expense expense = expenseRepository.findById(expenseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Expense not found with id: " + expenseId));
-
-        // Security check: must be in the group of the expense
-        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(expense.getGroup().getId(), currentUser.getId())) {
-            throw new ResourceNotFoundException("Group not found or access denied");
-        }
-
+        Expense expense = findAccessibleExpense(expenseId, currentUser.getId());
         expenseRepository.delete(expense);
     }
 
@@ -174,5 +132,75 @@ public class ExpenseService {
                 .splitType(expense.getSplitType())
                 .splits(splitDtos)
                 .build();
+    }
+
+    private Expense findAccessibleExpense(Long expenseId, Long userId) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found with id: " + expenseId));
+
+        requireGroupMembership(expense.getGroup().getId(), userId);
+        return expense;
+    }
+
+    private void requireGroupMembership(Long groupId, Long userId) {
+        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, userId)) {
+            throw new ResourceNotFoundException("Group not found or access denied");
+        }
+    }
+
+    private User resolvePayer(Long groupId, Long paidById, User currentUser) {
+        if (paidById == null) {
+            return currentUser;
+        }
+        User paidBy = userService.getEntityById(paidById);
+        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, paidBy.getId())) {
+            throw new BadRequestException("Payer is not a member of the group");
+        }
+        return paidBy;
+    }
+
+    private List<User> resolveSplitUsers(Long groupId, List<Long> splitWithUserIds) {
+        List<User> splitUsers = new ArrayList<>();
+        if (splitWithUserIds != null && !splitWithUserIds.isEmpty()) {
+            for (Long userId : splitWithUserIds) {
+                User user = userService.getEntityById(userId);
+                if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, user.getId())) {
+                    throw new BadRequestException("User to split with is not a member of the group: " + user.getName());
+                }
+                splitUsers.add(user);
+            }
+        } else {
+            splitUsers = groupMemberRepository.findByGroupId(groupId)
+                    .stream()
+                    .map(GroupMember::getUser)
+                    .collect(Collectors.toList());
+        }
+
+        if (splitUsers.isEmpty()) {
+            throw new BadRequestException("No members to split the expense with");
+        }
+        return splitUsers;
+    }
+
+    private List<ExpenseSplit> buildEqualSplits(Expense expense, List<User> splitUsers, BigDecimal amount) {
+        int N = splitUsers.size();
+        BigDecimal baseShare = amount.divide(BigDecimal.valueOf(N), 2, RoundingMode.DOWN);
+        BigDecimal remainder = amount.subtract(baseShare.multiply(BigDecimal.valueOf(N)));
+
+        List<ExpenseSplit> splits = new ArrayList<>();
+        for (int i = 0; i < N; i++) {
+            User user = splitUsers.get(i);
+            BigDecimal share = i == 0 ? baseShare.add(remainder) : baseShare;
+
+            ExpenseSplitId splitId = new ExpenseSplitId(expense.getId(), user.getId());
+            ExpenseSplit split = ExpenseSplit.builder()
+                    .id(splitId)
+                    .expense(expense)
+                    .user(user)
+                    .amountOwed(share)
+                    .build();
+            splits.add(split);
+        }
+        return splits;
     }
 }
