@@ -9,6 +9,7 @@ import type {
   CreateSettlementRequest,
   UpdateExpenseRequest,
   UpdateGroupRequest,
+  UpdateSettlementRequest,
 } from '@/api/types'
 
 export const queryKeys = {
@@ -192,9 +193,29 @@ export function useCreateSettlement(groupId: number) {
   return useMutation({
     mutationFn: (body: CreateSettlementRequest) => api.createSettlement(groupId, body),
     onSuccess: () => {
-      invalidateGroup(queryClient, groupId)
+      invalidateSettlementRelated(queryClient, groupId)
       toast.success('Settlement recorded')
     },
     onError: (error: Error) => toast.error(error.message),
   })
+}
+
+export function useUpdateSettlement(groupId: number, settlementId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: UpdateSettlementRequest) => api.updateSettlement(settlementId, body),
+    onSuccess: () => {
+      invalidateSettlementRelated(queryClient, groupId)
+      toast.success('Settlement updated')
+    },
+    onError: (error: Error) => toast.error(error.message),
+  })
+}
+
+function invalidateSettlementRelated(queryClient: ReturnType<typeof useQueryClient>, groupId: number) {
+  queryClient.invalidateQueries({ queryKey: queryKeys.settlements(groupId) })
+  queryClient.invalidateQueries({ queryKey: queryKeys.balances(groupId) })
+  queryClient.invalidateQueries({ queryKey: queryKeys.netBalance(groupId) })
+  queryClient.invalidateQueries({ queryKey: queryKeys.group(groupId) })
+  queryClient.invalidateQueries({ queryKey: queryKeys.groups })
 }

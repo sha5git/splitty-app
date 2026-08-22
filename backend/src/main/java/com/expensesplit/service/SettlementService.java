@@ -2,6 +2,7 @@ package com.expensesplit.service;
 
 import com.expensesplit.dto.CreateSettlementRequest;
 import com.expensesplit.dto.SettlementDto;
+import com.expensesplit.dto.UpdateSettlementRequest;
 import com.expensesplit.entity.Group;
 import com.expensesplit.entity.Settlement;
 import com.expensesplit.entity.User;
@@ -39,24 +40,12 @@ public class SettlementService {
     @Transactional
     public SettlementDto recordSettlement(Long groupId, CreateSettlementRequest request, FirebaseUserPrincipal principal) {
         User currentUser = userService.getEntityByFirebaseUid(principal.getUid());
-
-        // Security check: current user must be in the group
-        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, currentUser.getId())) {
-            throw new ResourceNotFoundException("Group not found or access denied");
-        }
+        requireGroupMembership(groupId, currentUser.getId());
+        User fromUser = resolveParty(groupId, request.getFromUserId(), "Payer (fromUser)");
+        User toUser = resolveParty(groupId, request.getToUserId(), "Receiver (toUser)");
+        requireDifferentParties(fromUser.getId(), toUser.getId());
 
         Group group = groupService.getEntityById(groupId);
-
-        User fromUser = userService.getEntityById(request.getFromUserId());
-        User toUser = userService.getEntityById(request.getToUserId());
-
-        // Both must be members
-        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, fromUser.getId())) {
-            throw new BadRequestException("Payer (fromUser) is not a member of the group");
-        }
-        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, toUser.getId())) {
-            throw new BadRequestException("Receiver (toUser) is not a member of the group");
-        }
 
         Settlement settlement = Settlement.builder()
                 .group(group)
@@ -70,13 +59,27 @@ public class SettlementService {
         return convertToDto(settlement);
     }
 
+    @Transactional
+    public SettlementDto updateSettlement(Long settlementId, UpdateSettlementRequest request, FirebaseUserPrincipal principal) {
+        User currentUser = userService.getEntityByFirebaseUid(principal.getUid());
+        Settlement settlement = findAccessibleSettlement(settlementId, currentUser.getId());
+        Long groupId = settlement.getGroup().getId();
+
+        User fromUser = resolveParty(groupId, request.getFromUserId(), "Payer (fromUser)");
+        User toUser = resolveParty(groupId, request.getToUserId(), "Receiver (toUser)");
+        requireDifferentParties(fromUser.getId(), toUser.getId());
+
+        settlement.setFromUser(fromUser);
+        settlement.setToUser(toUser);
+        settlement.setAmount(request.getAmount());
+        // Preserve original date
+
+        return convertToDto(settlementRepository.save(settlement));
+    }
+
     public List<SettlementDto> listSettlements(Long groupId, FirebaseUserPrincipal principal) {
         User currentUser = userService.getEntityByFirebaseUid(principal.getUid());
-
-        // Security check
-        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, currentUser.getId())) {
-            throw new ResourceNotFoundException("Group not found or access denied");
-        }
+        requireGroupMembership(groupId, currentUser.getId());
 
         List<Settlement> settlements = settlementRepository.findByGroupIdOrderByDateDesc(groupId);
         return settlements.stream().map(this::convertToDto).collect(Collectors.toList());
@@ -92,5 +95,32 @@ public class SettlementService {
                 .amount(settlement.getAmount())
                 .date(settlement.getDate())
                 .build();
+    }
+
+    private Settlement findAccessibleSettlement(Long settlementId, Long userId) {
+        Settlement settlement = settlementRepository.findById(settlementId)
+                .orElseThrow(() -> new ResourceNotFoundException("Settlement not found with id: " + settlementId));
+        requireGroupMembership(settlement.getGroup().getId(), userId);
+        return settlement;
+    }
+
+    private void requireGroupMembership(Long groupId, Long userId) {
+        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, userId)) {
+            throw new ResourceNotFoundException("Group not found or access denied");
+        }
+    }
+
+    private User resolveParty(Long groupId, Long userId, String role) {
+        User user = userService.getEntityById(userId);
+        if (!groupMemberRepository.existsByIdGroupIdAndIdUserId(groupId, user.getId())) {
+            throw new BadRequestException(role + " is not a member of the group");
+        }
+        return user;
+    }
+
+    private void requireDifferentParties(Long fromUserId, Long toUserId) {
+        if (fromUserId.equals(toUserId)) {
+            throw new BadRequestException("Payer and recipient must be different people");
+        }
     }
 }

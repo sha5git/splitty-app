@@ -367,6 +367,39 @@ paths:
                 items:
                   $ref: '#/components/schemas/SettlementDto'
 
+  /api/settlements/{id}:
+    put:
+      summary: Update a settlement
+      description: >
+        Updates payer, recipient, and amount.
+        The original settlement date is preserved.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSettlementRequest'
+      responses:
+        '200':
+          description: Settlement updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettlementDto'
+        '400':
+          description: Invalid request
+        '404':
+          description: Settlement not found or access denied
+
 components:
   securitySchemes:
     BearerAuth:
@@ -542,6 +575,22 @@ components:
         date:
           type: string
           format: date-time
+    UpdateSettlementRequest:
+      type: object
+      required:
+        - fromUserId
+        - toUserId
+        - amount
+      properties:
+        fromUserId:
+          type: integer
+          format: int64
+        toUserId:
+          type: integer
+          format: int64
+        amount:
+          type: number
+          format: double
     SettlementDto:
       type: object
       properties:

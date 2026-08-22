@@ -90,4 +90,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  updateSettlement: (settlementId: number, body: import('@/api/types').UpdateSettlementRequest) =>
+    apiFetch<import('@/api/types').SettlementDto>(`/api/settlements/${settlementId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
 }
