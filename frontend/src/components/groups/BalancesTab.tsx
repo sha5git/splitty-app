@@ -1,23 +1,35 @@
-import { Link } from '@tanstack/react-router'
+import { useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 
 import { useAuth } from '@/auth/AuthProvider'
 import type { BalanceDto, UserDto } from '@/api/types'
 import { useBalances } from '@/api/hooks'
+import {
+  SettlementFormDialog,
+  type SettlementFormDefaults,
+} from '@/components/groups/SettlementFormDialog'
 import { UserAvatar } from '@/components/UserAvatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatInr } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 interface BalancesTabProps {
   groupId: number
   members: UserDto[]
 }
 
-export function BalancesTab({ groupId }: BalancesTabProps) {
+export function BalancesTab({ groupId, members }: BalancesTabProps) {
   const { user } = useAuth()
   const { data: balances, isLoading, isError, error } = useBalances(groupId)
+  const [settleOpen, setSettleOpen] = useState(false)
+  const [settleDefaults, setSettleDefaults] = useState<SettlementFormDefaults | undefined>()
+
+  function openSettlement(defaults?: SettlementFormDefaults) {
+    setSettleDefaults(defaults)
+    setSettleOpen(true)
+  }
 
   if (isLoading) {
     return (
@@ -39,40 +51,68 @@ export function BalancesTab({ groupId }: BalancesTabProps) {
     )
   }
 
-  if (!balances?.length) {
+  const myBalances = (balances ?? []).filter(
+    (b) => b.fromUser?.id === user?.id || b.toUser?.id === user?.id,
+  )
+
+  if (!myBalances.length) {
     return (
       <Card className="border-dashed">
         <CardContent className="py-12 text-center">
           <p className="font-medium">All settled up</p>
-          <p className="mt-1 text-sm text-muted-foreground">No outstanding balances in this group.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {balances?.length
+              ? 'You have no outstanding balances in this group.'
+              : 'No outstanding balances in this group.'}
+          </p>
         </CardContent>
       </Card>
     )
   }
 
-  const myDebts = balances.filter(
-    (b) => b.fromUser?.id === user?.id || b.toUser?.id === user?.id,
-  )
-  const displayBalances = myDebts.length > 0 ? myDebts : balances
-
   return (
     <div className="space-y-4">
-      {displayBalances.map((balance, index) => (
-        <BalanceRow key={`${balance.fromUser?.id}-${balance.toUser?.id}-${index}`} balance={balance} currentUserId={user?.id} />
+      {myBalances.map((balance, index) => (
+        <BalanceRow
+          key={`${balance.fromUser?.id}-${balance.toUser?.id}-${index}`}
+          balance={balance}
+          currentUserId={user?.id}
+          onClick={() =>
+            openSettlement({
+              fromUserId: balance.fromUser?.id,
+              toUserId: balance.toUser?.id,
+              amount: balance.amount,
+            })
+          }
+        />
       ))}
 
       <div className="pt-2">
-        <Button asChild variant="outline" className="w-full sm:w-auto">
-          <Link to="/groups/$groupId" params={{ groupId: String(groupId) }} search={{ tab: 'settlements' }}>
-            Record a settlement
-          </Link>
+        <Button variant="outline" className="w-full sm:w-auto" onClick={() => openSettlement()}>
+          Record a settlement
         </Button>
       </div>
+
+      <SettlementFormDialog
+        groupId={groupId}
+        members={members}
+        defaults={settleDefaults}
+        open={settleOpen}
+        onOpenChange={setSettleOpen}
+      />
     </div>
   )
 }
 
-function BalanceRow({ balance, currentUserId }: { balance: BalanceDto; currentUserId?: number }) {
+function BalanceRow({
+  balance,
+  currentUserId,
+  onClick,
+}: {
+  balance: BalanceDto
+  currentUserId?: number
+  onClick: () => void
+}) {
   const from = balance.fromUser
   const to = balance.toUser
   const amount = balance.amount ?? 0
@@ -83,7 +123,18 @@ function BalanceRow({ balance, currentUserId }: { balance: BalanceDto; currentUs
   const owedToYou = to.id === currentUserId
 
   return (
-    <Card>
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick()
+        }
+      }}
+      className={cn('cursor-pointer transition-colors hover:bg-muted/40')}
+    >
       <CardContent className="flex items-center gap-4 py-4">
         <UserAvatar user={from} className="h-10 w-10" />
         <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />

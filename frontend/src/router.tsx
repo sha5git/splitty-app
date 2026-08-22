@@ -85,9 +85,11 @@ const groupsRoute = createRoute({
 const groupDetailRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/groups/$groupId',
-  validateSearch: (search: Record<string, unknown>) => ({
-    tab: (search.tab as 'expenses' | 'balances' | 'settlements' | 'members' | undefined) ?? 'expenses',
-  }),
+  validateSearch: (search: Record<string, unknown>): { tab: 'expenses' | 'balances' | 'members' } => {
+    const tab = search.tab
+    if (tab === 'balances' || tab === 'members') return { tab }
+    return { tab: 'expenses' }
+  },
   component: function GroupDetailRoute() {
     const { groupId } = groupDetailRoute.useParams()
     const { tab } = groupDetailRoute.useSearch()

@@ -634,6 +634,65 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/settlements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update a settlement
+         * @description Updates payer, recipient, and amount. The original settlement date is preserved.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateSettlementRequest"];
+                };
+            };
+            responses: {
+                /** @description Settlement updated successfully */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SettlementDto"];
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Settlement not found or access denied */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -728,6 +787,14 @@ export interface components {
             amount: number;
             /** Format: date-time */
             date?: string;
+        };
+        UpdateSettlementRequest: {
+            /** Format: int64 */
+            fromUserId: number;
+            /** Format: int64 */
+            toUserId: number;
+            /** Format: double */
+            amount: number;
         };
         SettlementDto: {
             /** Format: int64 */

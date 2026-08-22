@@ -13,6 +13,7 @@ export type AddMemberRequest = components['schemas']['AddMemberRequest']
 export type CreateExpenseRequest = components['schemas']['CreateExpenseRequest']
 export type UpdateExpenseRequest = components['schemas']['UpdateExpenseRequest']
 export type CreateSettlementRequest = components['schemas']['CreateSettlementRequest']
+export type UpdateSettlementRequest = components['schemas']['UpdateSettlementRequest']
 
 export class ApiError extends Error {
   readonly status: number

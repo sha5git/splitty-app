@@ -9,7 +9,6 @@ import { useGroup, useUpdateGroup } from '@/api/hooks'
 import { BalancesTab } from '@/components/groups/BalancesTab'
 import { ExpensesTab } from '@/components/groups/ExpensesTab'
 import { MembersTab } from '@/components/groups/MembersTab'
-import { SettlementsTab } from '@/components/groups/SettlementsTab'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -29,7 +28,7 @@ interface GroupDetailPageProps {
   initialTab: GroupTab
 }
 
-type GroupTab = 'expenses' | 'balances' | 'settlements' | 'members'
+type GroupTab = 'expenses' | 'balances' | 'members'
 
 const renameGroupSchema = z.object({
   name: z.string().min(2, 'Group name must be at least 2 characters').max(80),
@@ -167,10 +166,9 @@ export function GroupDetailPage({ groupId, initialTab }: GroupDetailPageProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setTab(value as GroupTab)}>
-        <TabsList className="grid w-full grid-cols-4 sm:w-auto sm:inline-flex">
+        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-flex">
           <TabsTrigger value="expenses">Expenses</TabsTrigger>
           <TabsTrigger value="balances">Balances</TabsTrigger>
-          <TabsTrigger value="settlements">Settle</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
         </TabsList>
 
@@ -179,9 +177,6 @@ export function GroupDetailPage({ groupId, initialTab }: GroupDetailPageProps) {
         </TabsContent>
         <TabsContent value="balances">
           <BalancesTab groupId={groupId} members={members} />
-        </TabsContent>
-        <TabsContent value="settlements">
-          <SettlementsTab groupId={groupId} members={members} />
         </TabsContent>
         <TabsContent value="members">
           <MembersTab groupId={groupId} members={members} />
