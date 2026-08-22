@@ -95,4 +95,6 @@ Splitty vX.Y.Z — One-line theme
 
 | Version | Title | File |
 |---------|-------|------|
+| v1.2.0 | Splitty v1.2.0 — Settlements on the expenses timeline | [v1.2.0.md](./v1.2.0.md) |
+| v1.1.0 | Splitty v1.1.0 — Expense detail, edit, and mobile-friendly lists | [v1.1.0.md](./v1.1.0.md) |
 | v1.0.0 | Splitty v1.0.0 — Initial Public Release | [v1.0.0.md](./v1.0.0.md) |
