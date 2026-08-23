@@ -8,10 +8,15 @@ import { LiveSyncProvider } from '@/api/LiveSyncProvider'
 import { AppRouter } from '@/components/layout/AppRouter'
 import { queryClient } from '@/lib/query-client'
 import { applyTheme, getTheme } from '@/lib/theme'
+import { registerSW } from 'virtual:pwa-register'
 
 import './index.css'
 
 applyTheme(getTheme())
+
+if (import.meta.env.PROD) {
+  registerSW({ immediate: true })
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
