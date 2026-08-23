@@ -45,6 +45,9 @@ public class ExpenseServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private GroupEventPublisher groupEventPublisher;
+
     private User u1;
     private User u2;
     private Group group;

@@ -1,6 +1,7 @@
 package com.expensesplit.service;
 
 import com.expensesplit.dto.GroupDto;
+import com.expensesplit.dto.GroupChangeEvent;
 import com.expensesplit.dto.UserDto;
 import com.expensesplit.dto.CreateGroupRequest;
 import com.expensesplit.dto.AddMemberRequest;
@@ -30,15 +31,18 @@ public class GroupService {
     private final GroupMemberRepository groupMemberRepository;
     private final UserRepository userRepository;
     private final UserService userService;
+    private final GroupEventPublisher groupEventPublisher;
 
     public GroupService(GroupRepository groupRepository,
                         GroupMemberRepository groupMemberRepository,
                         UserRepository userRepository,
-                        UserService userService) {
+                        UserService userService,
+                        GroupEventPublisher groupEventPublisher) {
         this.groupRepository = groupRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.userRepository = userRepository;
         this.userService = userService;
+        this.groupEventPublisher = groupEventPublisher;
     }
 
     @Transactional
@@ -61,7 +65,14 @@ public class GroupService {
                 .build();
         groupMemberRepository.save(member);
 
-        return convertToDto(group);
+        GroupDto dto = convertToDto(group);
+        groupEventPublisher.publishAfterCommit(GroupChangeEvent.builder()
+                .groupId(dto.getId())
+                .type("GROUP_CREATED")
+                .entityId(dto.getId())
+                .actorUserId(creator.getId())
+                .build());
+        return dto;
     }
 
     public List<GroupDto> listGroups(FirebaseUserPrincipal principal) {
@@ -96,7 +107,14 @@ public class GroupService {
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found with id: " + groupId));
 
         group.setName(request.getName().trim());
-        return convertToDto(groupRepository.save(group));
+        GroupDto dto = convertToDto(groupRepository.save(group));
+        groupEventPublisher.publishAfterCommit(GroupChangeEvent.builder()
+                .groupId(dto.getId())
+                .type("GROUP_UPDATED")
+                .entityId(dto.getId())
+                .actorUserId(user.getId())
+                .build());
+        return dto;
     }
 
     public Group getEntityById(Long id) {
@@ -137,6 +155,12 @@ public class GroupService {
                 .joinedAt(LocalDateTime.now())
                 .build();
         groupMemberRepository.save(newMember);
+        groupEventPublisher.publishAfterCommit(GroupChangeEvent.builder()
+                .groupId(groupId)
+                .type("MEMBER_ADDED")
+                .entityId(userToAdd.getId())
+                .actorUserId(currentUser.getId())
+                .build());
     }
 
     @Transactional
@@ -154,6 +178,12 @@ public class GroupService {
         }
 
         groupMemberRepository.deleteById(memberId);
+        groupEventPublisher.publishAfterCommit(GroupChangeEvent.builder()
+                .groupId(groupId)
+                .type("MEMBER_REMOVED")
+                .entityId(userId)
+                .actorUserId(currentUser.getId())
+                .build(), userId);
     }
 
     public GroupDto convertToDto(Group group) {

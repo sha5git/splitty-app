@@ -693,6 +693,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/events/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Subscribe to group change events
+         * @description Server-Sent Events stream of `group-change` messages. Clients must use fetch with an Authorization Bearer token (native EventSource cannot set that header). Comment heartbeats keep the connection alive. REST remains the source of truth; events only signal that cached group data should be refetched.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description SSE stream (`text/event-stream`) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/event-stream": string;
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -807,6 +853,19 @@ export interface components {
             amount?: number;
             /** Format: date-time */
             date?: string;
+        };
+        GroupChangeEvent: {
+            /** Format: int64 */
+            groupId: number;
+            /** @enum {string} */
+            type: "EXPENSE_CREATED" | "EXPENSE_UPDATED" | "EXPENSE_DELETED" | "SETTLEMENT_CREATED" | "SETTLEMENT_UPDATED" | "GROUP_CREATED" | "GROUP_UPDATED" | "MEMBER_ADDED" | "MEMBER_REMOVED";
+            /**
+             * Format: int64
+             * @description Expense id, settlement id, or member user id depending on type.
+             */
+            entityId?: number;
+            /** Format: int64 */
+            actorUserId?: number;
         };
     };
     responses: never;

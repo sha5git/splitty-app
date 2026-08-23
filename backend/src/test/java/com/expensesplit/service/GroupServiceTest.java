@@ -43,6 +43,9 @@ public class GroupServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private GroupEventPublisher groupEventPublisher;
+
     private User u1;
     private Group group;
     private FirebaseUserPrincipal principal;
@@ -83,6 +86,8 @@ public class GroupServiceTest {
         assertEquals("Weekend in Goa", dto.getName());
         assertEquals("Weekend in Goa", group.getName());
         verify(groupRepository).save(group);
+        verify(groupEventPublisher).publishAfterCommit(argThat(event ->
+                event.getGroupId().equals(10L) && "GROUP_UPDATED".equals(event.getType())));
     }
 
     @Test

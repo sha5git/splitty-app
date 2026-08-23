@@ -400,6 +400,29 @@ paths:
         '404':
           description: Settlement not found or access denied
 
+  /api/events/stream:
+    get:
+      summary: Subscribe to group change events
+      description: >
+        Server-Sent Events stream of `group-change` messages. Clients must use fetch
+        with an Authorization Bearer token (native EventSource cannot set that header).
+        Comment heartbeats keep the connection alive. REST remains the source of truth;
+        events only signal that cached group data should be refetched.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: SSE stream (`text/event-stream`)
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  event: group-change
+                  data: {"groupId":10,"type":"EXPENSE_CREATED","entityId":100,"actorUserId":1}
+        '401':
+          description: Unauthorized
+
 components:
   securitySchemes:
     BearerAuth:
@@ -610,3 +633,31 @@ components:
         date:
           type: string
           format: date-time
+    GroupChangeEvent:
+      type: object
+      required:
+        - groupId
+        - type
+      properties:
+        groupId:
+          type: integer
+          format: int64
+        type:
+          type: string
+          enum:
+            - EXPENSE_CREATED
+            - EXPENSE_UPDATED
+            - EXPENSE_DELETED
+            - SETTLEMENT_CREATED
+            - SETTLEMENT_UPDATED
+            - GROUP_CREATED
+            - GROUP_UPDATED
+            - MEMBER_ADDED
+            - MEMBER_REMOVED
+        entityId:
+          type: integer
+          format: int64
+          description: Expense id, settlement id, or member user id depending on type.
+        actorUserId:
+          type: integer
+          format: int64

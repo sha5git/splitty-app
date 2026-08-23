@@ -14,6 +14,7 @@ export type CreateExpenseRequest = components['schemas']['CreateExpenseRequest']
 export type UpdateExpenseRequest = components['schemas']['UpdateExpenseRequest']
 export type CreateSettlementRequest = components['schemas']['CreateSettlementRequest']
 export type UpdateSettlementRequest = components['schemas']['UpdateSettlementRequest']
+export type GroupChangeEvent = components['schemas']['GroupChangeEvent']
 
 export class ApiError extends Error {
   readonly status: number
