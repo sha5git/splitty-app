@@ -1,6 +1,6 @@
 # Phase 1 Backend Plan — Expense Splitting App
 
-**Status: complete.** Next: [Phase 2 — Real-time updates](phase2-realtime-updates.md), then [Phase 3 — PWA shell](phase3-pwa-shell.md) and [Phase 4 — Push notifications](phase4-push-notifications.md).
+**Status: complete.** Next: [Phase 4 — Push notifications](phase4-push-notifications.md). [Phase 2](phase2-realtime-updates.md) and [Phase 3](phase3-pwa-shell.md) are also complete.
 
 Debt simplification (mentioned as optional Phase 2 below) stays on the deferred backlog; it is not the next numbered product phase.
 
