@@ -1,5 +1,9 @@
 # Phase 1 Backend Plan — Expense Splitting App
 
+**Status: complete.** Next: [Phase 2 — Real-time updates](phase2-realtime-updates.md), then [Phase 3 — PWA shell](phase3-pwa-shell.md) and [Phase 4 — Push notifications](phase4-push-notifications.md).
+
+Debt simplification (mentioned as optional Phase 2 below) stays on the deferred backlog; it is not the next numbered product phase.
+
 **Stack:** Spring Boot 3.x (Java 17+), PostgreSQL, Spring Data JPA, Spring Security (Firebase JWT verification), Maven, Lombok, Flyway (DB migrations)
 
 ## Goal for Phase 1
@@ -97,4 +101,4 @@ This lives in `BalanceCalculationService` and is the one part worth writing care
 
 ---
 
-**Next step:** scaffold the actual project — `pom.xml`, entities, repositories, the Firebase security filter, and the first working endpoint — so you have something running locally.
+**Next:** [Phase 2 — Real-time in-app updates](phase2-realtime-updates.md).

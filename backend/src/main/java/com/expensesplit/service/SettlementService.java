@@ -1,6 +1,7 @@
 package com.expensesplit.service;
 
 import com.expensesplit.dto.CreateSettlementRequest;
+import com.expensesplit.dto.GroupChangeEvent;
 import com.expensesplit.dto.SettlementDto;
 import com.expensesplit.dto.UpdateSettlementRequest;
 import com.expensesplit.entity.Group;
@@ -26,15 +27,18 @@ public class SettlementService {
     private final GroupMemberRepository groupMemberRepository;
     private final GroupService groupService;
     private final UserService userService;
+    private final GroupEventPublisher groupEventPublisher;
 
     public SettlementService(SettlementRepository settlementRepository,
                              GroupMemberRepository groupMemberRepository,
                              GroupService groupService,
-                             UserService userService) {
+                             UserService userService,
+                             GroupEventPublisher groupEventPublisher) {
         this.settlementRepository = settlementRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.groupService = groupService;
         this.userService = userService;
+        this.groupEventPublisher = groupEventPublisher;
     }
 
     @Transactional
@@ -56,7 +60,14 @@ public class SettlementService {
                 .build();
 
         settlement = settlementRepository.save(settlement);
-        return convertToDto(settlement);
+        SettlementDto dto = convertToDto(settlement);
+        groupEventPublisher.publishAfterCommit(GroupChangeEvent.builder()
+                .groupId(groupId)
+                .type("SETTLEMENT_CREATED")
+                .entityId(dto.getId())
+                .actorUserId(currentUser.getId())
+                .build());
+        return dto;
     }
 
     @Transactional
@@ -74,7 +85,14 @@ public class SettlementService {
         settlement.setAmount(request.getAmount());
         // Preserve original date
 
-        return convertToDto(settlementRepository.save(settlement));
+        SettlementDto dto = convertToDto(settlementRepository.save(settlement));
+        groupEventPublisher.publishAfterCommit(GroupChangeEvent.builder()
+                .groupId(groupId)
+                .type("SETTLEMENT_UPDATED")
+                .entityId(dto.getId())
+                .actorUserId(currentUser.getId())
+                .build());
+        return dto;
     }
 
     public List<SettlementDto> listSettlements(Long groupId, FirebaseUserPrincipal principal) {

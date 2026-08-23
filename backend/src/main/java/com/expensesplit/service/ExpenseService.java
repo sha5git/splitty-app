@@ -3,6 +3,7 @@ package com.expensesplit.service;
 import com.expensesplit.dto.CreateExpenseRequest;
 import com.expensesplit.dto.ExpenseDto;
 import com.expensesplit.dto.ExpenseSplitDto;
+import com.expensesplit.dto.GroupChangeEvent;
 import com.expensesplit.dto.UpdateExpenseRequest;
 import com.expensesplit.entity.*;
 import com.expensesplit.exception.BadRequestException;
@@ -28,15 +29,18 @@ public class ExpenseService {
     private final GroupMemberRepository groupMemberRepository;
     private final GroupService groupService;
     private final UserService userService;
+    private final GroupEventPublisher groupEventPublisher;
 
     public ExpenseService(ExpenseRepository expenseRepository,
                           GroupMemberRepository groupMemberRepository,
                           GroupService groupService,
-                          UserService userService) {
+                          UserService userService,
+                          GroupEventPublisher groupEventPublisher) {
         this.expenseRepository = expenseRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.groupService = groupService;
         this.userService = userService;
+        this.groupEventPublisher = groupEventPublisher;
     }
 
     @Transactional
@@ -64,7 +68,14 @@ public class ExpenseService {
         }
         expense = expenseRepository.save(expense);
 
-        return convertToDto(expense);
+        ExpenseDto dto = convertToDto(expense);
+        groupEventPublisher.publishAfterCommit(GroupChangeEvent.builder()
+                .groupId(groupId)
+                .type("EXPENSE_CREATED")
+                .entityId(dto.getId())
+                .actorUserId(currentUser.getId())
+                .build());
+        return dto;
     }
 
     public List<ExpenseDto> listExpenses(Long groupId, FirebaseUserPrincipal principal) {
@@ -102,14 +113,28 @@ public class ExpenseService {
             split.getId().setExpenseId(expense.getId());
         }
 
-        return convertToDto(expenseRepository.save(expense));
+        ExpenseDto dto = convertToDto(expenseRepository.save(expense));
+        groupEventPublisher.publishAfterCommit(GroupChangeEvent.builder()
+                .groupId(groupId)
+                .type("EXPENSE_UPDATED")
+                .entityId(dto.getId())
+                .actorUserId(currentUser.getId())
+                .build());
+        return dto;
     }
 
     @Transactional
     public void deleteExpense(Long expenseId, FirebaseUserPrincipal principal) {
         User currentUser = userService.getEntityByFirebaseUid(principal.getUid());
         Expense expense = findAccessibleExpense(expenseId, currentUser.getId());
+        Long groupId = expense.getGroup().getId();
         expenseRepository.delete(expense);
+        groupEventPublisher.publishAfterCommit(GroupChangeEvent.builder()
+                .groupId(groupId)
+                .type("EXPENSE_DELETED")
+                .entityId(expenseId)
+                .actorUserId(currentUser.getId())
+                .build());
     }
 
     public ExpenseDto convertToDto(Expense expense) {
