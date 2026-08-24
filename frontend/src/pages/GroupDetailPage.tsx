@@ -152,7 +152,7 @@ export function GroupDetailPage({ groupId, initialTab }: GroupDetailPageProps) {
               </Button>
             </div>
             <div className="mt-2 flex items-center gap-2">
-              <div className="flex -space-x-2">
+              <div className="flex overflow-hidden -space-x-2">
                 {members.slice(0, 5).map((member) => (
                   <UserAvatar key={member.id} user={member} className="h-7 w-7 border-2 border-background" />
                 ))}

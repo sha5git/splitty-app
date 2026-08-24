@@ -69,13 +69,15 @@
     @apply border-border;
   }
 
+  html {
+    color-scheme: light;
+    overflow-x: clip;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: 'cv11', 'ss01';
-  }
-
-  html {
-    color-scheme: light;
+    overflow-x: clip;
   }
 
   html.dark {
@@ -96,6 +98,8 @@
 
   #root {
     @apply min-h-dvh select-none;
+    overflow-x: clip;
+    max-width: 100%;
   }
 
   input,

@@ -101,7 +101,7 @@ function ExpenseRow({
     <Link
       to="/groups/$groupId/expenses/$expenseId"
       params={{ groupId: String(groupId), expenseId: String(expense.id) }}
-      className="flex items-center gap-2 border-b border-border/60 py-2 last:border-b-0 hover:bg-muted/40"
+      className="flex min-w-0 items-center gap-2 border-b border-border/60 py-2 last:border-b-0 hover:bg-muted/40"
     >
       <div className="w-7 shrink-0 text-center leading-tight text-muted-foreground">
         {dayParts ? (
@@ -205,7 +205,7 @@ export function ExpensesTab({ groupId, members }: ExpensesTabProps) {
   const [editingSettlement, setEditingSettlement] = useState<SettlementDto | undefined>()
 
   const toolbar = (
-    <div className="flex justify-end gap-2">
+    <div className="flex flex-wrap justify-end gap-2">
       <SettlementFormDialog
         groupId={groupId}
         members={members}
