@@ -135,14 +135,14 @@ function BalanceRow({
       }}
       className={cn('cursor-pointer transition-colors hover:bg-muted/40')}
     >
-      <CardContent className="flex items-center gap-4 py-4">
-        <UserAvatar user={from} className="h-10 w-10" />
+      <CardContent className="flex min-w-0 items-center gap-4 py-4">
+        <UserAvatar user={from} className="h-10 w-10 shrink-0" />
         <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <UserAvatar user={to} className="h-10 w-10" />
+        <UserAvatar user={to} className="h-10 w-10 shrink-0" />
 
-        <div className="ml-auto text-right">
+        <div className="ml-auto min-w-0 text-right">
           <p className="font-mono text-lg font-semibold tabular-nums">{formatInr(amount)}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="truncate text-xs text-muted-foreground">
             {youOwe ? (
               <>You owe {to.name}</>
             ) : owedToYou ? (

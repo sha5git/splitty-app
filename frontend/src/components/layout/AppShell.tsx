@@ -16,7 +16,7 @@ export function AppShell() {
   }
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="min-h-dvh overflow-x-clip bg-background">
       <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link to="/groups" className="flex items-center gap-2.5">
@@ -46,7 +46,7 @@ export function AppShell() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6 pb-24">
+      <main className="mx-auto min-w-0 max-w-5xl px-4 py-6 pb-24">
         <Outlet />
       </main>
     </div>

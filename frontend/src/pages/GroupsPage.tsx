@@ -180,8 +180,8 @@ export function GroupsPage() {
               <Card className="h-full transition-colors hover:border-primary/40 hover:bg-accent/30">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <CardTitle className="text-base">{group.name}</CardTitle>
+                    <div className="min-w-0">
+                      <CardTitle className="truncate text-base">{group.name}</CardTitle>
                       {group.createdAt ? (
                         <CardDescription className="mt-1">Created {formatRelative(group.createdAt)}</CardDescription>
                       ) : null}
@@ -192,7 +192,7 @@ export function GroupsPage() {
                 <CardContent className="space-y-4">
                   {group.id != null ? <GroupNetBalance groupId={group.id} /> : null}
                   <div className="flex items-center justify-between pt-1">
-                    <div className="flex -space-x-2">
+                    <div className="flex overflow-hidden -space-x-2">
                       {group.members?.slice(0, 4).map((member) => (
                         <UserAvatar
                           key={member.id}
