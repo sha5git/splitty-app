@@ -95,4 +95,8 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
+  registerFcmToken: (body: import('@/api/types').FcmTokenRequest) =>
+    apiFetch<void>('/api/users/me/fcm-token', { method: 'POST', body: JSON.stringify(body) }),
+  deleteFcmToken: (body: import('@/api/types').FcmTokenRequest) =>
+    apiFetch<void>('/api/users/me/fcm-token', { method: 'DELETE', body: JSON.stringify(body) }),
 }

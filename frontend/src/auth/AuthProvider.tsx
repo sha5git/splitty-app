@@ -6,6 +6,7 @@ import { api } from '@/api/client'
 import { queryKeys } from '@/api/hooks'
 import type { UserDto } from '@/api/types'
 import { logOut, subscribeToAuth } from '@/auth/firebase'
+import { unregisterPushNotifications } from '@/api/push-notifications'
 import { queryClient } from '@/lib/query-client'
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'sync-error'
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [syncUser])
 
   const signOut = useCallback(async () => {
+    await unregisterPushNotifications()
     await logOut()
     queryClient.clear()
     setUser(null)

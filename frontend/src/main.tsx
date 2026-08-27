@@ -5,6 +5,7 @@ import { Toaster } from 'sonner'
 
 import { AuthProvider } from '@/auth/AuthProvider'
 import { LiveSyncProvider } from '@/api/LiveSyncProvider'
+import { PushProvider } from '@/api/PushProvider'
 import { AppRouter } from '@/components/layout/AppRouter'
 import { queryClient } from '@/lib/query-client'
 import { applyTheme, getTheme } from '@/lib/theme'
@@ -23,8 +24,10 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <LiveSyncProvider>
-          <AppRouter />
-          <Toaster richColors closeButton position="top-center" />
+          <PushProvider>
+            <AppRouter />
+            <Toaster richColors closeButton position="top-center" />
+          </PushProvider>
         </LiveSyncProvider>
       </AuthProvider>
     </QueryClientProvider>
