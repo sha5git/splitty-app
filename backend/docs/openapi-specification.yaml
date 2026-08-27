@@ -23,6 +23,48 @@ paths:
         '401':
           description: Unauthorized
 
+  /api/users/me/fcm-token:
+    post:
+      summary: Register this device's FCM token
+      description: |
+        Upserts a Firebase Cloud Messaging device token for the current user.
+        If the token was previously registered to another user (shared device), it is reassigned.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FcmTokenRequest'
+            example:
+              token: fcm-device-token-example
+      responses:
+        '204':
+          description: Token registered
+        '400':
+          description: Missing or blank token
+        '401':
+          description: Unauthorized
+    delete:
+      summary: Unregister this device's FCM token
+      description: Removes the token for the current user so push notifications stop after logout. No-op if the token is not stored.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FcmTokenRequest'
+            example:
+              token: fcm-device-token-example
+      responses:
+        '204':
+          description: Token removed
+        '401':
+          description: Unauthorized
+
   /api/groups:
     post:
       summary: Create a group
@@ -661,3 +703,12 @@ components:
         actorUserId:
           type: integer
           format: int64
+    FcmTokenRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          minLength: 1
+          description: Firebase Cloud Messaging registration token for this browser or device.

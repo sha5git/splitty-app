@@ -31,12 +31,17 @@ public class GroupEventPublisher {
 
     private final GroupMemberRepository groupMemberRepository;
     private final ObjectMapper objectMapper;
+    private final FcmPushService fcmPushService;
     private final ConcurrentHashMap<Long, CopyOnWriteArrayList<SseEmitter>> emittersByUserId =
             new ConcurrentHashMap<>();
 
-    public GroupEventPublisher(GroupMemberRepository groupMemberRepository, ObjectMapper objectMapper) {
+    public GroupEventPublisher(
+            GroupMemberRepository groupMemberRepository,
+            ObjectMapper objectMapper,
+            FcmPushService fcmPushService) {
         this.groupMemberRepository = groupMemberRepository;
         this.objectMapper = objectMapper;
+        this.fcmPushService = fcmPushService;
     }
 
     public SseEmitter subscribe(Long userId) {
@@ -116,6 +121,8 @@ public class GroupEventPublisher {
                 }
             }
         }
+
+        fcmPushService.notifyMembers(event, userIds);
     }
 
     private void removeEmitter(Long userId, SseEmitter emitter) {

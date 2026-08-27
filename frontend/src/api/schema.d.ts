@@ -50,6 +50,104 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/me/fcm-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register this device's FCM token
+         * @description Upserts a Firebase Cloud Messaging device token for the current user.
+         *     If the token was previously registered to another user (shared device), it is reassigned.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "token": "fcm-device-token-example"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["FcmTokenRequest"];
+                };
+            };
+            responses: {
+                /** @description Token registered */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Missing or blank token */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /**
+         * Unregister this device's FCM token
+         * @description Removes the token for the current user so push notifications stop after logout. No-op if the token is not stored.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "token": "fcm-device-token-example"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["FcmTokenRequest"];
+                };
+            };
+            responses: {
+                /** @description Token removed */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/groups": {
         parameters: {
             query?: never;
@@ -866,6 +964,10 @@ export interface components {
             entityId?: number;
             /** Format: int64 */
             actorUserId?: number;
+        };
+        FcmTokenRequest: {
+            /** @description Firebase Cloud Messaging registration token for this browser or device. */
+            token: string;
         };
     };
     responses: never;

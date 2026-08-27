@@ -34,6 +34,11 @@ function validateConfig() {
 let app: FirebaseApp
 let auth: Auth
 
+export function getFirebaseApp(): FirebaseApp {
+  getFirebaseAuth()
+  return app
+}
+
 export function getFirebaseAuth(): Auth {
   if (!auth) {
     validateConfig()

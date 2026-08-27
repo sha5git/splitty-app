@@ -2,7 +2,7 @@
 
 **Depends on:** [Phase 2](phase2-realtime-updates.md) for live in-app data. This phase does **not** implement push notifications.
 
-**Status: complete** (installable shell). Next: [Phase 4 — Push notifications](phase4-push-notifications.md).
+**Status: complete** (installable shell). Push: [Phase 4 — Push notifications](phase4-push-notifications.md).
 
 ## Goal for Phase 3
 
