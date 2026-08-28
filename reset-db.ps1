@@ -80,12 +80,12 @@ if ($KeepUsers) {
     # nothing here can touch the users table.
     # RESTART IDENTITY resets auto-increment ids back to 1 for a clean slate.
     $truncateSql = @"
-TRUNCATE TABLE expense_splits, settlements, expenses, group_members, groups
+TRUNCATE TABLE expense_splits, settlements, expenses, group_members, groups, user_fcm_tokens
 RESTART IDENTITY CASCADE;
 "@
 
     Run-Sql $truncateSql
-    Write-Host "      Groups, expenses, splits, settlements, and memberships cleared." -ForegroundColor Gray
+    Write-Host "      Groups, expenses, splits, settlements, memberships, and FCM tokens cleared." -ForegroundColor Gray
     Write-Host "      users table left untouched — no need to re-register test accounts." -ForegroundColor Gray
     Write-Host ""
     Write-Host "Done. Schema and Flyway history untouched, so the app will start normally." -ForegroundColor Cyan
@@ -99,6 +99,7 @@ DROP TABLE IF EXISTS settlements     CASCADE;
 DROP TABLE IF EXISTS expenses        CASCADE;
 DROP TABLE IF EXISTS group_members   CASCADE;
 DROP TABLE IF EXISTS groups          CASCADE;
+DROP TABLE IF EXISTS user_fcm_tokens CASCADE;
 DROP TABLE IF EXISTS users           CASCADE;
 "@
 
