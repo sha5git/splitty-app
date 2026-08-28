@@ -95,6 +95,7 @@ Splitty vX.Y.Z — One-line theme
 
 | Version | Title | File |
 |---------|-------|------|
+| v1.4.1 | Splitty v1.4.1 — Signup display name | [v1.4.1.md](./v1.4.1.md) |
 | v1.4.0 | Splitty v1.4.0 — Push notifications when Splitty is in the background | [v1.4.0.md](./v1.4.0.md) |
 | v1.3.1 | Splitty v1.3.1 — Maskable PWA icon fix | [v1.3.1.md](./v1.3.1.md) |
 | v1.3.0 | Splitty v1.3.0 — Live group updates and installable PWA | [v1.3.0.md](./v1.3.0.md) |
