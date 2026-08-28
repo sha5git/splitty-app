@@ -5,7 +5,7 @@ import { ApiError } from '@/api/types'
 import { api } from '@/api/client'
 import { queryKeys } from '@/api/hooks'
 import type { UserDto } from '@/api/types'
-import { logOut, subscribeToAuth } from '@/auth/firebase'
+import { logOut, subscribeToAuth, waitForProfileSetup } from '@/auth/firebase'
 import { unregisterPushNotifications } from '@/api/push-notifications'
 import { queryClient } from '@/lib/query-client'
 
@@ -29,6 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [syncError, setSyncError] = useState<string | null>(null)
 
   const syncUser = useCallback(async (fbUser: User) => {
+    await waitForProfileSetup()
+    await fbUser.reload()
     await fbUser.getIdToken(true)
     const profile = await api.getMe()
     setUser(profile)

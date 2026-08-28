@@ -8,6 +8,8 @@ import com.expensesplit.security.FirebaseUserPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
+
 @Service
 public class UserService {
 
@@ -24,15 +26,18 @@ public class UserService {
                     User newUser = new User();
                     newUser.setFirebaseUid(principal.getUid());
                     newUser.setEmail(principal.getEmail() != null ? principal.getEmail() : principal.getUid() + "@example.com");
-                    newUser.setName(principal.getName() != null ? principal.getName() : "User " + principal.getUid());
+                    newUser.setName(resolveName(principal));
                     newUser.setAvatarUrl(principal.getAvatarUrl());
                     return userRepository.save(newUser);
                 });
         
         // Update user name/avatar if they changed in Firebase (sync)
         boolean updated = false;
-        if (principal.getName() != null && !principal.getName().equals(user.getName())) {
-            user.setName(principal.getName());
+        String resolvedName = resolveName(principal);
+        if (!resolvedName.equals(user.getName())
+                && (hasDisplayName(principal)
+                        || isGeneratedUidUsername(user.getName(), user.getFirebaseUid()))) {
+            user.setName(resolvedName);
             updated = true;
         }
         if (principal.getAvatarUrl() != null && !principal.getAvatarUrl().equals(user.getAvatarUrl())) {
@@ -44,6 +49,39 @@ public class UserService {
         }
 
         return convertToDto(user);
+    }
+
+    static String resolveName(FirebaseUserPrincipal principal) {
+        if (hasDisplayName(principal)) {
+            return principal.getName().trim();
+        }
+        return nameFromEmail(principal.getEmail());
+    }
+
+    static boolean hasDisplayName(FirebaseUserPrincipal principal) {
+        return principal.getName() != null && !principal.getName().isBlank();
+    }
+
+    static String nameFromEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return "Someone";
+        }
+        int at = email.indexOf('@');
+        if (at <= 0) {
+            return "Someone";
+        }
+        String local = email.substring(0, at).trim();
+        if (local.isBlank()) {
+            return "Someone";
+        }
+        if (local.length() == 1) {
+            return local.toUpperCase(Locale.ROOT);
+        }
+        return local.substring(0, 1).toUpperCase(Locale.ROOT) + local.substring(1);
+    }
+
+    static boolean isGeneratedUidUsername(String name, String firebaseUid) {
+        return name != null && firebaseUid != null && name.equals("User " + firebaseUid);
     }
 
     public User getEntityById(Long id) {

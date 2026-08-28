@@ -52,15 +52,33 @@ export function subscribeToAuth(callback: (user: User | null) => void) {
   return onAuthStateChanged(getFirebaseAuth(), callback)
 }
 
+/** Blocks profile sync until signUp finishes updateProfile + token refresh. */
+let profileSetup: Promise<void> | null = null
+
+export function waitForProfileSetup(): Promise<void> {
+  return profileSetup ?? Promise.resolve()
+}
+
 export async function signIn(email: string, password: string) {
   return signInWithEmailAndPassword(getFirebaseAuth(), email, password)
 }
 
 export async function signUp(name: string, email: string, password: string) {
-  const credential = await createUserWithEmailAndPassword(getFirebaseAuth(), email, password)
-  await updateProfile(credential.user, { displayName: name })
-  await credential.user.getIdToken(true)
-  return credential
+  let finishProfileSetup!: () => void
+  profileSetup = new Promise<void>((resolve) => {
+    finishProfileSetup = resolve
+  })
+
+  try {
+    const credential = await createUserWithEmailAndPassword(getFirebaseAuth(), email, password)
+    await updateProfile(credential.user, { displayName: name.trim() })
+    await credential.user.reload()
+    await credential.user.getIdToken(true)
+    return credential
+  } finally {
+    finishProfileSetup()
+    profileSetup = null
+  }
 }
 
 export async function logOut() {
