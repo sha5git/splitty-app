@@ -16,11 +16,18 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  calendarDateFromIso,
+  parseAppDate,
+  toCalendarDateString,
+  toLocalDateTimeStringFromCalendarDate,
+} from '@/lib/format'
 
 const settlementSchema = z.object({
   fromUserId: z.coerce.number(),
   toUserId: z.coerce.number(),
   amount: z.coerce.number().positive('Amount must be greater than zero'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date is required'),
 })
 
 type SettlementForm = z.infer<typeof settlementSchema>
@@ -63,6 +70,7 @@ export function SettlementFormDialog({
       fromUserId: settlement?.fromUser?.id ?? defaults?.fromUserId ?? members[0]?.id ?? 0,
       toUserId: settlement?.toUser?.id ?? defaults?.toUserId ?? members[1]?.id ?? members[0]?.id ?? 0,
       amount: settlement?.amount ?? defaults?.amount ?? ('' as unknown as number),
+      date: settlement?.date ? calendarDateFromIso(settlement.date) : toCalendarDateString(),
     }
   }
 
@@ -86,6 +94,7 @@ export function SettlementFormDialog({
     settlement?.fromUser?.id,
     settlement?.toUser?.id,
     settlement?.amount,
+    settlement?.date,
     defaults?.fromUserId,
     defaults?.toUserId,
     defaults?.amount,
@@ -98,11 +107,18 @@ export function SettlementFormDialog({
 
   async function onSubmit(values: SettlementForm) {
     if (values.fromUserId === values.toUserId) return
+    const timeSource = isEdit && settlement?.date ? parseAppDate(settlement.date) : new Date()
+    const body = {
+      fromUserId: values.fromUserId,
+      toUserId: values.toUserId,
+      amount: values.amount,
+      date: toLocalDateTimeStringFromCalendarDate(values.date, timeSource),
+    }
     if (isEdit) {
       if (!settlement?.id) return
-      await updateSettlement.mutateAsync(values)
+      await updateSettlement.mutateAsync(body)
     } else {
-      await createSettlement.mutateAsync(values)
+      await createSettlement.mutateAsync(body)
     }
     setOpen(false)
   }
@@ -170,6 +186,12 @@ export function SettlementFormDialog({
               {...register('amount')}
             />
             {errors.amount ? <p className="text-sm text-destructive">{errors.amount.message}</p> : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor={`${fieldPrefix}-date`}>Date</Label>
+            <Input id={`${fieldPrefix}-date`} type="date" {...register('date')} />
+            {errors.date ? <p className="text-sm text-destructive">{errors.date.message}</p> : null}
           </div>
 
           <Button type="submit" className="w-full" disabled={pending || samePerson}>

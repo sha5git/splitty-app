@@ -83,7 +83,9 @@ public class SettlementService {
         settlement.setFromUser(fromUser);
         settlement.setToUser(toUser);
         settlement.setAmount(request.getAmount());
-        // Preserve original date
+        if (request.getDate() != null) {
+            settlement.setDate(request.getDate());
+        }
 
         SettlementDto dto = convertToDto(settlementRepository.save(settlement));
         groupEventPublisher.publishAfterCommit(GroupChangeEvent.builder()

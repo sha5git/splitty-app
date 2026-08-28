@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -22,6 +23,8 @@ public class UpdateExpenseRequest {
     private String description;
 
     private Long paidById;
+
+    private LocalDateTime date;
 
     private List<Long> splitWithUserIds; // If null/empty, split with all members in the group
 }

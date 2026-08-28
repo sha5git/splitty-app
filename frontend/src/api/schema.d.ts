@@ -500,7 +500,7 @@ export interface paths {
         };
         /**
          * Update an expense
-         * @description Updates description, amount, payer, and equal splits. The original expense date is preserved.
+         * @description Updates description, amount, payer, equal splits, and optionally date. Omit `date` to keep the existing expense date.
          */
         put: {
             parameters: {
@@ -742,7 +742,7 @@ export interface paths {
         get?: never;
         /**
          * Update a settlement
-         * @description Updates payer, recipient, and amount. The original settlement date is preserved.
+         * @description Updates payer, recipient, amount, and optionally date. Omit `date` to keep the existing settlement date.
          */
         put: {
             parameters: {
@@ -875,7 +875,10 @@ export interface components {
             description: string;
             /** Format: int64 */
             paidById?: number;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Unzoned local datetime (no Z). Omit to use the server clock.
+             */
             date?: string;
             splitWithUserIds?: number[];
         };
@@ -885,6 +888,11 @@ export interface components {
             description: string;
             /** Format: int64 */
             paidById?: number;
+            /**
+             * Format: date-time
+             * @description Unzoned local datetime (no Z). Omit to keep the existing date.
+             */
+            date?: string;
             splitWithUserIds?: number[];
         };
         ExpenseSplitDto: {
@@ -929,7 +937,10 @@ export interface components {
             toUserId: number;
             /** Format: double */
             amount: number;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Unzoned local datetime (no Z). Omit to use the server clock.
+             */
             date?: string;
         };
         UpdateSettlementRequest: {
@@ -939,6 +950,11 @@ export interface components {
             toUserId: number;
             /** Format: double */
             amount: number;
+            /**
+             * Format: date-time
+             * @description Unzoned local datetime (no Z). Omit to keep the existing date.
+             */
+            date?: string;
         };
         SettlementDto: {
             /** Format: int64 */

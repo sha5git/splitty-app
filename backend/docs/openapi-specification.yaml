@@ -269,8 +269,8 @@ paths:
     put:
       summary: Update an expense
       description: >
-        Updates description, amount, payer, and equal splits.
-        The original expense date is preserved.
+        Updates description, amount, payer, equal splits, and optionally date.
+        Omit `date` to keep the existing expense date.
       security:
         - BearerAuth: []
       parameters:
@@ -413,8 +413,8 @@ paths:
     put:
       summary: Update a settlement
       description: >
-        Updates payer, recipient, and amount.
-        The original settlement date is preserved.
+        Updates payer, recipient, amount, and optionally date.
+        Omit `date` to keep the existing settlement date.
       security:
         - BearerAuth: []
       parameters:
@@ -542,6 +542,7 @@ components:
         date:
           type: string
           format: date-time
+          description: Unzoned local datetime (no Z). Omit to use the server clock.
         splitWithUserIds:
           type: array
           items:
@@ -561,6 +562,10 @@ components:
         paidById:
           type: integer
           format: int64
+        date:
+          type: string
+          format: date-time
+          description: Unzoned local datetime (no Z). Omit to keep the existing date.
         splitWithUserIds:
           type: array
           items:
@@ -640,6 +645,7 @@ components:
         date:
           type: string
           format: date-time
+          description: Unzoned local datetime (no Z). Omit to use the server clock.
     UpdateSettlementRequest:
       type: object
       required:
@@ -656,6 +662,10 @@ components:
         amount:
           type: number
           format: double
+        date:
+          type: string
+          format: date-time
+          description: Unzoned local datetime (no Z). Omit to keep the existing date.
     SettlementDto:
       type: object
       properties:

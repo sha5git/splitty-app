@@ -185,6 +185,29 @@ public class ExpenseServiceTest {
     }
 
     @Test
+    public void updateExpense_updatesDate_whenProvided() {
+        when(userService.getEntityByFirebaseUid("uid1")).thenReturn(u1);
+        when(expenseRepository.findById(100L)).thenReturn(Optional.of(expense));
+        when(groupMemberRepository.existsByIdGroupIdAndIdUserId(10L, 1L)).thenReturn(true);
+        when(groupMemberRepository.existsByIdGroupIdAndIdUserId(10L, 2L)).thenReturn(true);
+        when(userService.getEntityById(1L)).thenReturn(u1);
+        when(userService.getEntityById(2L)).thenReturn(u2);
+        when(expenseRepository.save(any(Expense.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LocalDateTime newDate = LocalDateTime.of(2026, 8, 28, 14, 5, 0);
+        UpdateExpenseRequest request = new UpdateExpenseRequest();
+        request.setDescription("Lunch");
+        request.setAmount(BigDecimal.valueOf(30.00));
+        request.setPaidById(1L);
+        request.setSplitWithUserIds(Arrays.asList(1L, 2L));
+        request.setDate(newDate);
+
+        ExpenseDto dto = expenseService.updateExpense(100L, request, principal);
+
+        assertEquals(newDate, dto.getDate());
+    }
+
+    @Test
     public void updateExpense_throwsBadRequest_whenPayerNotInGroup() {
         when(userService.getEntityByFirebaseUid("uid1")).thenReturn(u1);
         when(expenseRepository.findById(100L)).thenReturn(Optional.of(expense));

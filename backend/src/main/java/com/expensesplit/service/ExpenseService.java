@@ -105,7 +105,9 @@ public class ExpenseService {
         expense.setAmount(request.getAmount());
         expense.setPaidBy(paidBy);
         expense.setSplitType("EQUAL");
-        // Preserve original date
+        if (request.getDate() != null) {
+            expense.setDate(request.getDate());
+        }
 
         expense.getSplits().clear();
         expense.getSplits().addAll(buildEqualSplits(expense, splitUsers, request.getAmount()));

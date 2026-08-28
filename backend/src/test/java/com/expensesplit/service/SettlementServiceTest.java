@@ -107,6 +107,28 @@ public class SettlementServiceTest {
     }
 
     @Test
+    public void updateSettlement_updatesDate_whenProvided() {
+        when(userService.getEntityByFirebaseUid("uid1")).thenReturn(u1);
+        when(settlementRepository.findById(50L)).thenReturn(Optional.of(settlement));
+        when(groupMemberRepository.existsByIdGroupIdAndIdUserId(10L, 1L)).thenReturn(true);
+        when(groupMemberRepository.existsByIdGroupIdAndIdUserId(10L, 2L)).thenReturn(true);
+        when(userService.getEntityById(1L)).thenReturn(u1);
+        when(userService.getEntityById(2L)).thenReturn(u2);
+        when(settlementRepository.save(any(Settlement.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        LocalDateTime newDate = LocalDateTime.of(2026, 8, 28, 14, 5, 0);
+        UpdateSettlementRequest request = new UpdateSettlementRequest();
+        request.setFromUserId(1L);
+        request.setToUserId(2L);
+        request.setAmount(BigDecimal.valueOf(250.00));
+        request.setDate(newDate);
+
+        SettlementDto dto = settlementService.updateSettlement(50L, request, principal);
+
+        assertEquals(newDate, dto.getDate());
+    }
+
+    @Test
     public void updateSettlement_throwsNotFound_whenCallerNotInGroup() {
         when(userService.getEntityByFirebaseUid("uid1")).thenReturn(u1);
         when(settlementRepository.findById(50L)).thenReturn(Optional.of(settlement));

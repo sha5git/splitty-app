@@ -19,11 +19,18 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  calendarDateFromIso,
+  parseAppDate,
+  toCalendarDateString,
+  toLocalDateTimeStringFromCalendarDate,
+} from '@/lib/format'
 
 const expenseSchema = z.object({
   description: z.string().min(1, 'Description is required').max(200),
   amount: z.coerce.number().positive('Amount must be greater than zero'),
   paidById: z.coerce.number().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date is required'),
 })
 
 type ExpenseFormValues = z.infer<typeof expenseSchema>
@@ -62,6 +69,7 @@ export function ExpenseFormDialog({
       description: '',
       amount: '' as unknown as number,
       paidById: user?.id,
+      date: toCalendarDateString(),
     }
   }
 
@@ -70,6 +78,7 @@ export function ExpenseFormDialog({
       description: expense?.description ?? '',
       amount: expense?.amount ?? ('' as unknown as number),
       paidById: expense?.paidBy?.id ?? user?.id,
+      date: expense?.date ? calendarDateFromIso(expense.date) : toCalendarDateString(),
     }
   }
 
@@ -107,10 +116,12 @@ export function ExpenseFormDialog({
     if (splitWith.length === 0) return
 
     const allSelected = splitWith.length === members.length
+    const timeSource = mode === 'edit' && expense?.date ? parseAppDate(expense.date) : new Date()
     const body = {
       description: values.description,
       amount: values.amount,
       paidById: values.paidById ?? user?.id,
+      date: toLocalDateTimeStringFromCalendarDate(values.date, timeSource),
       splitWithUserIds: allSelected ? undefined : splitWith,
     }
 
@@ -155,6 +166,12 @@ export function ExpenseFormDialog({
             <Label htmlFor="amount">Amount (₹)</Label>
             <Input id="amount" type="number" step="0.01" min="0" placeholder="1250.00" {...register('amount')} />
             {errors.amount ? <p className="text-sm text-destructive">{errors.amount.message}</p> : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="date">Date</Label>
+            <Input id="date" type="date" {...register('date')} />
+            {errors.date ? <p className="text-sm text-destructive">{errors.date.message}</p> : null}
           </div>
 
           <div className="space-y-2">
