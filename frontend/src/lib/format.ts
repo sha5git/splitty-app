@@ -25,15 +25,28 @@ export function parseAppDate(iso: string) {
 }
 
 /**
- * Local wall-clock datetime for CreateExpense / CreateSettlement.
- * Prefer omitting `date` and letting the backend use LocalDateTime.now();
- * use this only when the client must send an explicit time.
+ * Local wall-clock datetime for Create/Update expense and settlement.
+ * Never use Date.toISOString() — that is UTC and can shift the calendar day.
  */
 export function toLocalDateTimeString(date = new Date()) {
+  return toLocalDateTimeStringFromCalendarDate(toCalendarDateString(date), date)
+}
+
+export function toCalendarDateString(date = new Date()) {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+export function calendarDateFromIso(iso: string) {
+  return toCalendarDateString(parseAppDate(iso))
+}
+
+/** Combine a YYYY-MM-DD picker value with a wall-clock time (no Z). */
+export function toLocalDateTimeStringFromCalendarDate(yyyyMmDd: string, timeSource = new Date()) {
   const pad = (n: number) => String(n).padStart(2, '0')
   return (
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
-    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+    `${yyyyMmDd}` +
+    `T${pad(timeSource.getHours())}:${pad(timeSource.getMinutes())}:${pad(timeSource.getSeconds())}`
   )
 }
 
